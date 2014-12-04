@@ -1,0 +1,7 @@
+# Project Mog
+
+This repository is the set of assets created for OneCommunity by BoxCast, Inc. (see the [statement of work](https://docs.google.com/a/boxcast.com/document/d/1FHLF0yk8EeH25S9pPcU-l9HvlNepceR0Mr4YCoRNxLg/edit)).
+
+### Prerequisites
+
+This depends on having the GStreamer SDK for Mac OS X installed (see [GStreamer SDK website](http://www.gstreamer.com/)) in the default location.
