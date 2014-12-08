@@ -9,7 +9,7 @@ SOURCES=               \
 	m1.cpp             \
 	PipelineTracer.cpp
 OBJECTS=$(patsubst %.cpp,%.o,$(SOURCES:.c=.o))
-EXECUTABLE=test
+EXECUTABLE=m1
 
 all: $(SOURCES) $(EXECUTABLE)
 
