@@ -1,7 +1,47 @@
 # Project Mog
 
-This repository is the set of assets created for OneCommunity by BoxCast, Inc. (see the [statement of work](https://docs.google.com/a/boxcast.com/document/d/1FHLF0yk8EeH25S9pPcU-l9HvlNepceR0Mr4YCoRNxLg/edit)).
+This repository is the set of assets created for OneCommunity by BoxCast, Inc. (see the
+[statement of work](https://docs.google.com/a/boxcast.com/document/d/1FHLF0yk8EeH25S9pPcU-l9HvlNepceR0Mr4YCoRNxLg/edit)).
 
 ### Prerequisites
 
-This depends on having the GStreamer SDK for Mac OS X installed (see [GStreamer SDK website](http://www.gstreamer.com/)) in the default location.
+This depends on having the GStreamer for Mac OS X installed (see
+[GStreamer website](http://gstreamer.freedesktop.org/)) in the default location.
+
+### TODO
+
+	* Milestone 0: DONE
+	
+	* Milestone 1:
+	
+		* Complete the latency- and jitter-measuring framework. Metrics are currently being
+		  collected, but have no way to be analyzed, visualized, etc.
+		  
+		* Document proof of latency.
+	
+	* Milestone 2: everything.
+	
+	* Milestone 3: everything.
+	
+	* Milestone 4: almost everything (already building a basic C++ app).
+	
+	* Milestone 5: almost everything (already created a git repo).
+		
+	* Miscellaneous:
+	
+		* How to choose video input, framerate, image size, etc.?
+		
+		* How to choose audio input?
+		
+		* Can we reduce the latency of the avfvideosrc? It seems to be hard-coded at 40ms.
+		
+		* What is the actual latency of osxvideosink? Render times are small, but there seems
+		  to be delay between render and actual display.
+		
+		* Out-of-band negotiation of caps/PPS/SPS/etc.?
+		
+		* Simultaneous capture, display of capture, encode, and decode (i.e. bidirectional
+		  stream) is taking ~75% of the CPU in step 1. Probably need to figure out a way to
+		  relieve the CPU for N-way streaming.
+		
+		* Probably use multicast for N-way streaming, but not sure of suitability over Internet2.
