@@ -17,8 +17,8 @@ ${GST_LAUNCH} -v -e \
 ! x264enc bitrate=5000 speed-preset=ultrafast tune=zerolatency \
 ! rtph264pay \
 ! rtpbin.send_rtp_sink_0 \
-  audiotestsrc is-live=true do-timestamp=true \
-! "audio/x-raw, format=(string)S32LE, layout=(string)interleaved, rate=(int)44100, channels=(int)1" \
+  osxaudiosrc do-timestamp=true buffer-time=30000 \
+! "audio/x-raw, format=(string)S32LE, layout=(string)interleaved, rate=(int)48000, channels=(int)1" \
 ! audioconvert \
 ! rtpL16pay buffer-list=true \
 ! rtpbin.send_rtp_sink_1 \
