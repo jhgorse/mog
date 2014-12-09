@@ -67,10 +67,11 @@ PipelineTracer::PipelineTracer(GstElement* pPipeline)
 					if ((g_strcmp0(caps_name, "video/x-raw") == 0) || (g_strcmp0(caps_name, "audio/x-raw") == 0))
 					{
 						// Create an entry in our vector
-						m_SourcePads.push_back(new SourcePadJitterEntry(pad));
+						SourcePadJitterEntry* pJE = new SourcePadJitterEntry(pad);
+						m_SourcePads.push_back(pJE);
 						
 						// Add a pad probe for buffers and buffer lists
-						gst_pad_add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), StaticSrcProbe, this, NULL);
+						gst_pad_add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), SourcePadJitterEntry::StaticSrcProbe, pJE, NULL);
 					} // END if (video or audio source)
 				} // END if (caps are real)
 				gst_caps_unref(caps);
@@ -92,11 +93,12 @@ PipelineTracer::PipelineTracer(GstElement* pPipeline)
 				// Create an entry in our vector
 				GstPad* sink = gst_element_get_first_sink_pad(element);
 				GstPad* src = gst_element_get_first_src_pad(element);
-				m_IELVector.push_back(new IntraElementLatencyEntry(sink, src));
+				IntraElementLatencyEntry* pIEL = new IntraElementLatencyEntry(sink, src);
+				m_IELVector.push_back(pIEL);
 
 				// Add pad probes for buffers and buffer lists
-				gst_pad_add_probe(sink, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), StaticXfrmSinkProbe, this, NULL);
-				gst_pad_add_probe(src, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), StaticXfrmSrcProbe, this, NULL);
+				gst_pad_add_probe(sink, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), IntraElementLatencyEntry::StaticXfrmSinkProbe, pIEL, NULL);
+				gst_pad_add_probe(src, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), IntraElementLatencyEntry::StaticXfrmSrcProbe, pIEL, NULL);
 			} // END if 1 sink and 1 source, or GstTee
 			
 			// RtpBin is a special case. We don't really care a lick about the rtcp sinks and
@@ -123,11 +125,12 @@ PipelineTracer::PipelineTracer(GstElement* pPipeline)
 						if (sink != NULL)
 						{
 							// Create an entry in our vector
-							m_IELVector.push_back(new IntraElementLatencyEntry(sink, src));
+							IntraElementLatencyEntry* pIEL = new IntraElementLatencyEntry(sink, src);
+							m_IELVector.push_back(pIEL);
 
 							// Add pad probes for buffers and buffer lists
-							gst_pad_add_probe(sink, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), StaticXfrmSinkProbe, this, NULL);
-							gst_pad_add_probe(src, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), StaticXfrmSrcProbe, this, NULL);
+							gst_pad_add_probe(sink, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), IntraElementLatencyEntry::StaticXfrmSinkProbe, pIEL, NULL);
+							gst_pad_add_probe(src, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), IntraElementLatencyEntry::StaticXfrmSrcProbe, pIEL, NULL);
 						} // END if (sink)
 					} // END while (pad iterator is producing)
 					gst_iterator_free(iter);
@@ -238,50 +241,6 @@ GstPad* PipelineTracer::FindRtpBinSinkBySrc(const GstPad* pSrcPad)
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// PipelineTracer::StaticRtpBinNewPad()
-///
-/// Static interface to RtpBinNewPad() (for C callback reasons).
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void PipelineTracer::StaticRtpBinNewPad(GstElement* element, GstPad* pad, gpointer user_data)
-{
-	(reinterpret_cast<PipelineTracer*>(user_data))->RtpBinNewPad(element, pad);
-} // END PipelineTracer::StaticRtpBinNewPad()
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// PipelineTracer::StaticSrcProbe()
-///
-/// Static interface to SrcProbe() (for C callback reasons).
-///////////////////////////////////////////////////////////////////////////////////////////////////
-GstPadProbeReturn PipelineTracer::StaticSrcProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
-{
-	return (reinterpret_cast<PipelineTracer*>(user_data))->SrcProbe(pad, info);
-} // END PipelineTracer::StaticSrcProbe()
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// PipelineTracer::StaticXfrmSinkProbe()
-///
-/// Static interface to XfrmSinkProbe() (for C callback reasons).
-///////////////////////////////////////////////////////////////////////////////////////////////////
-GstPadProbeReturn PipelineTracer::StaticXfrmSinkProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
-{
-	return (reinterpret_cast<PipelineTracer*>(user_data))->XfrmSinkProbe(pad, info);
-} // END PipelineTracer::StaticXfrmSinkProbe()
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// PipelineTracer::StaticXfrmSrcProbe()
-///
-/// Static interface to XfrmSrcProbe() (for C callback reasons).
-///////////////////////////////////////////////////////////////////////////////////////////////////
-GstPadProbeReturn PipelineTracer::StaticXfrmSrcProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
-{
-	return (reinterpret_cast<PipelineTracer*>(user_data))->XfrmSrcProbe(pad, info);
-} // END PipelineTracer::StaticXfrmSrcProbe()
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 /// PipelineTracer::GetPadParentElementName()
 ///
 /// Get a pad's parent element's name. For use in a constructor because gst_pad_get_parent_element
@@ -315,156 +274,15 @@ void PipelineTracer::RtpBinNewPad(GstElement* element, GstPad* pad)
 		if (sink != NULL)
 		{
 			// Create a new intra-element latency entry on our list
-			m_IELVector.push_back(new IntraElementLatencyEntry(sink, pad));
+			IntraElementLatencyEntry* pIEL = new IntraElementLatencyEntry(sink, pad);
+			m_IELVector.push_back(pIEL);
 
 			// Add pad probes for buffers and buffer lists
-			gst_pad_add_probe(sink, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), StaticXfrmSinkProbe, this, NULL);
-			gst_pad_add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), StaticXfrmSrcProbe, this, NULL);
+			gst_pad_add_probe(sink, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), IntraElementLatencyEntry::StaticXfrmSinkProbe, pIEL, NULL);
+			gst_pad_add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), IntraElementLatencyEntry::StaticXfrmSrcProbe, pIEL, NULL);
 		} // END if (sink)
 	} // END if (GstRtpBin and source pad)
 } // END PipelineTracer::RtpBinNewPad()
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// PipelineTracer::SrcProbe()
-///
-/// This function is called by GStreamer when data hits a source pad on a media source element
-/// (i.e. audio or video source). We track the jitter of the production of media source data.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-GstPadProbeReturn PipelineTracer::SrcProbe(GstPad* pad, GstPadProbeInfo* info)
-{
-	// Go looking to see if this pad is one we care about for tracking source pad jitter
-	SourcePadJitterEntry *pJE = NULL;
-	for (JEVector::const_iterator ci = m_SourcePads.cbegin(); ci != m_SourcePads.cend(); ++ci)
-	{
-		if (pad == (*ci)->Pad())
-		{
-			pJE = *ci;
-			break;
-		} // END if (pad matches)
-	} // END for each source pad jitter entry
-	
-	// If we found it, then try to record this entry
-	if (pJE != NULL)
-	{
-		// Get the current system clock time
-		GstClock* clock = gst_system_clock_obtain();
-		GstClockTime time = gst_clock_get_time(clock);
-		g_object_unref(clock);
-		
-		// If we have a last timestamp, we have jitter to measure.
-		if (pJE->LastSourceTimestamp() != 0)
-		{
-			guint64 deltaUs = (time - pJE->LastSourceTimestamp()) / 1000;
-			// TODO: Record jitter here...
-			g_message("%s.%s jitter = %llu us", pJE->ElementName(), pJE->PadName(), deltaUs);
-		} // END if (last timestamp != 0)
-		
-		// Mark the last timestamp.
-		pJE->LastSourceTimestamp(time);
-	} // END if (entry)
-
-	return GST_PAD_PROBE_OK;
-} // END PipelineTracer::SrcProbe()
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// PipelineTracer::XfrmSinkProbe()
-///
-/// This function is called by GStreamer when data hits a sink pad on a transform element. We mark
-/// the last sink timestamp for the purpose of comparison with the corresponding source pad
-/// timestamp.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-GstPadProbeReturn PipelineTracer::XfrmSinkProbe(GstPad* pad, GstPadProbeInfo* info)
-{
-	// Go looking to see if this pad is one we care about for tracking intra-element latency
-	IntraElementLatencyEntry *pIEL = NULL;
-	for (IELVector::const_iterator ci = m_IELVector.cbegin(); ci != m_IELVector.cend(); ++ci)
-	{
-		if (pad == (*ci)->SinkPad())
-		{
-			pIEL = *ci;
-			break;
-		} // END if (pad matches)
-	} // END for each intra-element latency entry
-	
-	// If we found it, then try to record this entry
-	if (pIEL != NULL)
-	{
-		// Get the current system clock time
-		GstClock* clock = gst_system_clock_obtain();
-		GstClockTime time = gst_clock_get_time(clock);
-		g_object_unref(clock);
-		
-		// For sink pads, we just record the last timestamp.
-		pIEL->LastSinkTimestamp(time);
-	} // END if (entry)
-	
-	return GST_PAD_PROBE_OK;
-} // END PipelineTracer::XfrmSinkProbe()
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// PipelineTracer::XfrmSrcProbe()
-///
-/// This function is called by GStreamer when data hits a source pad on a transform element. We
-/// compare this timestamp with the corresponding sink pad's last timestamp; this is the latency
-/// from sink pad to source pad.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-GstPadProbeReturn PipelineTracer::XfrmSrcProbe(GstPad* pad, GstPadProbeInfo* info)
-{
-	// Go looking to see if this pad is one we care about for tracking intra-element latency
-	IntraElementLatencyEntry *pIEL = NULL;
-	for (IELVector::const_iterator ci = m_IELVector.cbegin(); ci != m_IELVector.cend(); ++ci)
-	{
-		if (pad == (*ci)->SourcePad())
-		{
-			pIEL = *ci;
-			break;
-		} // END if (pad matches)
-	} // END for each intra-element latency entry
-	
-	// If we found it, then try to record this entry
-	if (pIEL != NULL)
-	{
-		// Get the current system clock time
-		GstClock* clock = gst_system_clock_obtain();
-		GstClockTime time = gst_clock_get_time(clock);
-		g_object_unref(clock);
-		
-		// If we have a last timestamp, then we have a latency to measure.
-		if (pIEL->LastSinkTimestamp() != 0)
-		{
-			guint64 deltaUs = (time - pIEL->LastSinkTimestamp()) / 1000;
-			// TODO: Record latency here...
-			g_message("%s.%s->%s jitter = %llu us", pIEL->ElementName(), pIEL->SinkPadName(), pIEL->SourcePadName(), deltaUs);
-			
-			// A transform element may turn N sink buffer (list)(s) into M src buffer (list)(s),
-			// where N is not necessarily == M. However, what we're interested in is the time when
-			// the element is actually doing the work of transforming, which is the delta between
-			// the last sink data and the first source data. We ensure that subsequent source data
-			// items are not recorded by marking the last sink timestamp as zero, thus skipping
-			// this block until subsequent sink data is received.
-			pIEL->LastSinkTimestamp(0);
-		} // END if (last sink timestamp != 0)
-	} // END if (entry)
-	
-	return GST_PAD_PROBE_OK;
-} // END PipelineTracer::XfrmSrcProbe()
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// SourcePadJitterEntry::SourcePadJitterEntry()
-///
-/// Constructor for a source pad jitter entry. Nothing surprising here.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-PipelineTracer::SourcePadJitterEntry::SourcePadJitterEntry(const GstPad* pSourcePad)
-	: m_pPad(GST_PAD(gst_object_ref(GST_OBJECT(pSourcePad))))
-	, m_ElementName(GetPadParentElementName(pSourcePad))
-	, m_PadName(gst_pad_get_name(pSourcePad))
-	, m_LastSourceTimestamp(0)
-{
-} // END SourcePadJitterEntry::SourcePadJitterEntry()()
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -482,7 +300,35 @@ PipelineTracer::SourcePadJitterEntry::~SourcePadJitterEntry()
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// SourcePadJitterEntry::SourcePadJitterEntry()
+/// SourcePadJitterEntry::SrcProbe()
+///
+/// This function is called by GStreamer when data hits a source pad on a media source element
+/// (i.e. audio or video source). We track the jitter of the production of media source data.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+GstPadProbeReturn PipelineTracer::SourcePadJitterEntry::SrcProbe(GstPad* pad, GstPadProbeInfo* info)
+{
+	// Get the current system clock time
+	GstClock* clock = gst_system_clock_obtain();
+	GstClockTime time = gst_clock_get_time(clock);
+	g_object_unref(clock);
+	
+	// If we have a last timestamp, we have jitter to measure.
+	if (LastSourceTimestamp() != 0)
+	{
+		guint64 deltaUs = (time - LastSourceTimestamp()) / 1000;
+		// TODO: Record jitter here...
+		g_message("%s.%s jitter = %llu us", ElementName(), PadName(), deltaUs);
+	} // END if (last timestamp != 0)
+	
+	// Mark the last timestamp.
+	LastSourceTimestamp(time);
+
+	return GST_PAD_PROBE_OK;
+} // END SourcePadJitterEntry::SrcProbe()
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// IntraElementLatencyEntry::IntraElementLatencyEntry()
 ///
 /// Constructor for an intra-element latency entry. Nothing surprising here.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -518,3 +364,54 @@ PipelineTracer::IntraElementLatencyEntry::~IntraElementLatencyEntry()
 	gst_object_unref(GST_OBJECT(m_pSourcePad));
 	gst_object_unref(GST_OBJECT(m_pSinkPad));
 } // END IntraElementLatencyEntry::~IntraElementLatencyEntry()
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// IntraElementLatencyEntry::XfrmSinkProbe()
+///
+/// This function is called by GStreamer when data hits a sink pad on a transform element. We mark
+/// the last sink timestamp for the purpose of comparison with the corresponding source pad
+/// timestamp.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+GstPadProbeReturn PipelineTracer::IntraElementLatencyEntry::XfrmSinkProbe(GstPad* pad, GstPadProbeInfo* info)
+{
+	// Get the current system clock time
+	GstClock* clock = gst_system_clock_obtain();
+	LastSinkTimestamp(gst_clock_get_time(clock)); // For sink pads, we just record the last timestamp.
+	g_object_unref(clock);
+	
+	return GST_PAD_PROBE_OK;
+} // END IntraElementLatencyEntry::XfrmSinkProbe()
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// IntraElementLatencyEntry::XfrmSrcProbe()
+///
+/// This function is called by GStreamer when data hits a source pad on a transform element. We
+/// compare this timestamp with the corresponding sink pad's last timestamp; this is the latency
+/// from sink pad to source pad.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+GstPadProbeReturn PipelineTracer::IntraElementLatencyEntry::XfrmSrcProbe(GstPad* pad, GstPadProbeInfo* info)
+{
+	// If we have a last timestamp, then we have a latency to measure.
+	if (LastSinkTimestamp() != 0)
+	{
+		// Get the current system clock time
+		GstClock* clock = gst_system_clock_obtain();
+		guint64 deltaUs = (gst_clock_get_time(clock) - LastSinkTimestamp()) / 1000;
+		g_object_unref(clock);
+		
+		// TODO: Record latency here...
+		g_message("%s.%s->%s latency = %llu us", ElementName(), SinkPadName(), SourcePadName(), deltaUs);
+		
+		// A transform element may turn N sink buffer (list)(s) into M src buffer (list)(s),
+		// where N is not necessarily == M. However, what we're interested in is the time when
+		// the element is actually doing the work of transforming, which is the delta between
+		// the last sink data and the first source data. We ensure that subsequent source data
+		// items are not recorded by marking the last sink timestamp as zero, thus skipping
+		// this block until subsequent sink data is received.
+		LastSinkTimestamp(0);
+	} // END if (last sink timestamp != 0)
+	
+	return GST_PAD_PROBE_OK;
+} // END IntraElementLatencyEntry::XfrmSrcProbe()
