@@ -21,7 +21,8 @@
 #ifndef __PIPELINE_TRACER_HPP__
 #define __PIPELINE_TRACER_HPP__
 
-#include <vector> // for std::vector
+#include <vector>              // for std::vector
+#include "StatsCollection.hpp" // for StatsCollection
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// This class traces metrics from a GStreamer pipeline. Specifically, it traces:
@@ -177,6 +178,7 @@ private:
 			, m_ElementName(GetPadParentElementName(pSourcePad))
 			, m_PadName(gst_pad_get_name(pSourcePad))
 			, m_LastSourceTimestamp(0)
+			, m_pStatsCollection(new StatsCollection<uint64_t>(1000))
 		{}
 		
 		
@@ -222,19 +224,23 @@ private:
 	private:
 	
 		/// The pad being tracked.
-		const GstPad* const		m_pPad;
+		const GstPad* const			m_pPad;
 		
 		
 		/// The name of the element being tracked.
-		const gchar* const		m_ElementName;
+		const gchar* const			m_ElementName;
 		
 		
 		/// The name of the pad being tracked.
-		const gchar* const		m_PadName;
+		const gchar* const			m_PadName;
 		
 		
 		/// The timestamp of the last time data left the source pad.
-		guint64					m_LastSourceTimestamp;
+		guint64						m_LastSourceTimestamp;
+		
+		
+		/// The jitter statistic collection
+		StatsCollection<uint64_t>*	m_pStatsCollection;
 	};
 	
 	
@@ -345,27 +351,30 @@ private:
 	private:
 	
 		/// The sink pad being tracked.
-		const GstPad* const		m_pSinkPad;
+		const GstPad* const			m_pSinkPad;
 		
 		
 		/// The source pad being tracked.
-		const GstPad* const		m_pSourcePad;
+		const GstPad* const			m_pSourcePad;
 		
 		
 		/// The name of the element being tracked.
-		const gchar* const		m_ElementName;
+		const gchar* const			m_ElementName;
 		
 		
 		/// The name of the sink pad being tracked.
-		const gchar* const		m_SinkPadName;
+		const gchar* const			m_SinkPadName;
 		
 		
 		/// The name of the source pad being tracked.
-		const gchar* const		m_SourcePadName;
+		const gchar* const			m_SourcePadName;
 		
 		
 		/// The timestamp of when data last arrived on the sink pad.
-		guint64					m_LastSinkTimestamp;
+		guint64						m_LastSinkTimestamp;
+		
+		/// The latency statistic collection
+		StatsCollection<uint64_t>*	m_pStatsCollection;
 	};
 	
 	

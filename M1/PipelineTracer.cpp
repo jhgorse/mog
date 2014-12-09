@@ -293,6 +293,9 @@ void PipelineTracer::RtpBinNewPad(GstElement* element, GstPad* pad)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 PipelineTracer::SourcePadJitterEntry::~SourcePadJitterEntry()
 {
+	g_message("%s.%s jitter = %llu us avg (%llu us std. dev.) from %u samples", ElementName(), PadName(), m_pStatsCollection->Average(), m_pStatsCollection->StandardDeviation(), m_pStatsCollection->Count());
+	
+	delete m_pStatsCollection;
 	g_free(const_cast<gchar*>(m_PadName));
 	g_free(const_cast<gchar*>(m_ElementName));
 	gst_object_unref(GST_OBJECT(m_pPad));
@@ -316,8 +319,7 @@ GstPadProbeReturn PipelineTracer::SourcePadJitterEntry::SrcProbe(GstPad* pad, Gs
 	if (LastSourceTimestamp() != 0)
 	{
 		guint64 deltaUs = (time - LastSourceTimestamp()) / 1000;
-		// TODO: Record jitter here...
-		g_message("%s.%s jitter = %llu us", ElementName(), PadName(), deltaUs);
+		m_pStatsCollection->Insert(deltaUs);
 	} // END if (last timestamp != 0)
 	
 	// Mark the last timestamp.
@@ -339,6 +341,7 @@ PipelineTracer::IntraElementLatencyEntry::IntraElementLatencyEntry(const GstPad*
 	, m_SinkPadName(gst_pad_get_name(pSinkPad))
 	, m_SourcePadName(gst_pad_get_name(pSourcePad))
 	, m_LastSinkTimestamp(0)
+	, m_pStatsCollection(new StatsCollection<uint64_t>(1000))
 {
 	// Sanity-check that these pads have the same parent.
 	GstElement* pSinkParentElement = gst_pad_get_parent_element(const_cast<GstPad*>(pSinkPad));
@@ -358,6 +361,8 @@ PipelineTracer::IntraElementLatencyEntry::IntraElementLatencyEntry(const GstPad*
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 PipelineTracer::IntraElementLatencyEntry::~IntraElementLatencyEntry()
 {
+	g_message("%s.%s->%s latency = %llu us avg (%llu us std. dev.) from %u samples", ElementName(), SinkPadName(), SourcePadName(), m_pStatsCollection->Average(), m_pStatsCollection->StandardDeviation(), m_pStatsCollection->Count());
+	delete m_pStatsCollection;
 	g_free(const_cast<gchar*>(m_SourcePadName));
 	g_free(const_cast<gchar*>(m_SinkPadName));
 	g_free(const_cast<gchar*>(m_ElementName));
@@ -400,9 +405,7 @@ GstPadProbeReturn PipelineTracer::IntraElementLatencyEntry::XfrmSrcProbe(GstPad*
 		GstClock* clock = gst_system_clock_obtain();
 		guint64 deltaUs = (gst_clock_get_time(clock) - LastSinkTimestamp()) / 1000;
 		g_object_unref(clock);
-		
-		// TODO: Record latency here...
-		g_message("%s.%s->%s latency = %llu us", ElementName(), SinkPadName(), SourcePadName(), deltaUs);
+		m_pStatsCollection->Insert(deltaUs);
 		
 		// A transform element may turn N sink buffer (list)(s) into M src buffer (list)(s),
 		// where N is not necessarily == M. However, what we're interested in is the time when
