@@ -33,8 +33,6 @@ This depends on having the GStreamer for Mac OS X installed (see
 		
 		* How to choose audio input?
 		
-		* Can we reduce the latency of the avfvideosrc? It seems to be hard-coded at 40ms.
-		
 		* What is the actual latency of osxvideosink? Render times are small, but there seems
 		  to be delay between render and actual display.
 		
