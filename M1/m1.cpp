@@ -1,8 +1,32 @@
-#include <signal.h>
-#include <gst/gst.h>
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// @file m1.cpp
+///
+/// Copyright (c) 2014, BoxCast, Inc. All rights reserved.
+///
+/// This library is free software; you can redistribute it and/or modify it under the terms of the
+/// GNU Lesser General Public License as published by the Free Software Foundation; either version
+/// 3.0 of the License, or (at your option) any later version.
+///
+/// This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+/// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
+/// the GNULesser General Public License for more details.
+///
+/// You should have received a copy of the GNU Lesser General Public License along with this
+/// library; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+/// Boston, MA 02110-1301 USA
+///
+/// @brief This file provides the "main" code to implement Milestone 1.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "PipelineTracer.hpp"
+#include <signal.h>           // for Posix signal-handling
+#include <gst/gst.h>          // for GStreamer stuff
+#include "PipelineTracer.hpp" // for PipelineTracer
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// This string is the pipeline created for this milestone. There are a lot of "hard-coded" things
+/// here that should be made more fluid and configurable in future milestones.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 static const char PIPELINE_STRING[] =
   "   rtpbin name=sendrtpbin latency=10"
   "   avfvideosrc name=videosrc do-timestamp=true device-index=0"
@@ -52,14 +76,29 @@ static const char PIPELINE_STRING[] =
   " ! audioconvert"
   " ! osxaudiosink enable-last-sample=false buffer-time=30000";
 
+
+/// The one and only GStreamer pipeline. It is static to this file because it's needed in the
+/// signal handler.
 static GstElement *pipeline;
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// on_sig_int()
+///
+/// Called on a SIGINT signal. Sends an EOS to the pipeline.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 static void on_sig_int(int sig)
 {
 	// Send EOS on SIGINT
 	gst_element_send_event(pipeline, gst_event_new_eos());
-}
+} // END on_sig_int()
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// main()
+///
+/// The main function. Creates the pipeline and makes it go.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
 {
 	// Initialize GStreamer
@@ -135,7 +174,7 @@ int main(int argc, char *argv[])
 	GstBus* bus = gst_element_get_bus(pipeline);
 	GstMessage* msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
    
-	// Parse message
+	// Parse message and print stuff about it.
 	if (msg != NULL)
 	{
 		GError *err;
@@ -159,9 +198,9 @@ int main(int argc, char *argv[])
 				// We should not reach here because we only asked for ERRORs and EOS
 				g_printerr("Unexpected message received.\n");
 				break;
-		}
+		} // END switch(message type)
 		gst_message_unref(msg);
-	}
+	} // END if (message)
 
 	// Free resources
 	delete pTracer;
@@ -170,4 +209,4 @@ int main(int argc, char *argv[])
 	gst_object_unref(pipeline);
 	
 	return 0;
-}
+} // END main()
