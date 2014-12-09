@@ -13,9 +13,6 @@ This depends on having the GStreamer for Mac OS X installed (see
 	* Milestone 0: DONE
 	
 	* Milestone 1:
-	
-		* Complete the latency- and jitter-measuring framework. Metrics are currently being
-		  collected, but have no way to be analyzed, visualized, etc.
 		  
 		* Document proof of latency.
 	
