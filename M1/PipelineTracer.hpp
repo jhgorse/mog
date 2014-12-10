@@ -40,6 +40,10 @@
 class PipelineTracer
 {
 public:
+	/// The size of the statistics collections for jitter and latency.
+	static const size_t STATS_COLLECTION_SIZE = 1000;
+	
+	
 	/// Constructor
 	explicit PipelineTracer(GstElement* pPipeline);
 	
@@ -178,7 +182,7 @@ private:
 			, m_ElementName(GetPadParentElementName(pSourcePad))
 			, m_PadName(gst_pad_get_name(pSourcePad))
 			, m_LastSourceTimestamp(0)
-			, m_pStatsCollection(new StatsCollection<uint64_t>(1000))
+			, m_StatsCollection(PipelineTracer::STATS_COLLECTION_SIZE)
 		{}
 		
 		
@@ -223,6 +227,10 @@ private:
 	
 	private:
 	
+		/// Print stats
+		void PrintStats() const;
+		
+	
 		/// The pad being tracked.
 		const GstPad* const			m_pPad;
 		
@@ -240,7 +248,7 @@ private:
 		
 		
 		/// The jitter statistic collection
-		StatsCollection<uint64_t>*	m_pStatsCollection;
+		StatsCollection<uint64_t>	m_StatsCollection;
 	};
 	
 	
@@ -350,6 +358,10 @@ private:
 	
 	private:
 	
+		/// Print stats
+		void PrintStats() const;
+		
+	
 		/// The sink pad being tracked.
 		const GstPad* const			m_pSinkPad;
 		
@@ -374,7 +386,7 @@ private:
 		guint64						m_LastSinkTimestamp;
 		
 		/// The latency statistic collection
-		StatsCollection<uint64_t>*	m_pStatsCollection;
+		StatsCollection<uint64_t>	m_StatsCollection;
 	};
 	
 	

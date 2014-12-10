@@ -62,6 +62,10 @@ public:
 
 	/// Count accessor
 	inline size_t Count() const { return m_Count; }
+	
+	
+	/// Whether or not the collection is full
+	inline bool IsFull() const { return m_Count == m_Capacity; }
 
 
 	/// Average accessor
@@ -79,7 +83,7 @@ public:
 		T oldTotalSquared;
 		
 		// First see if we have to remove one
-		if (m_Count == m_Capacity)
+		if (IsFull())
 		{
 			T itemRemoved = m_Storage[m_RemoveIndex];
 
@@ -119,6 +123,19 @@ public:
 		m_Average = m_Total / m_Count;
 		m_StdDev = static_cast<T>(sqrt((m_TotalSquared * m_Count) - (m_Total * m_Total)) / m_Count);
 	} // END Insert()
+	
+	
+	// Clear (empty) the collection
+	void Clear()
+	{
+		m_Count = 0;
+		m_InsertIndex = 0;
+		m_RemoveIndex = 0;
+		m_Total = 0;
+		m_TotalSquared = 0;
+		m_Average = 0;
+		m_StdDev = 0;
+	}
 
 protected:
 
