@@ -162,6 +162,10 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
+	// Dump to dot file (if GST_DEBUG_DUMP_DOT_DIR is set) to ${GST_DEBUG_DUMP_DOT_DIR}/.dot.
+	// We wait until the pipeline is playing to make sure pads are linked.
+	GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(pipeline), GST_DEBUG_GRAPH_SHOW_ALL, argv[0]);
+	
 	// Assign the SIGINT handler to send EOS
 	struct sigaction sigact;
 	sigact.sa_handler = on_sig_int;
