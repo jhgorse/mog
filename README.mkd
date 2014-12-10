@@ -12,9 +12,7 @@ This depends on having the GStreamer for Mac OS X installed (see
 
 	* Milestone 0: DONE
 	
-	* Milestone 1:
-		  
-		* Document proof of latency.
+	* Milestone 1: DONE
 	
 	* Milestone 2: everything.
 	
