@@ -30,7 +30,7 @@
 static const char PIPELINE_STRING[] =
   "   rtpbin name=sendrtpbin latency=10"
   "   avfvideosrc name=videosrc do-timestamp=true device-index=1"
-  " ! video/x-raw, width=(int)1920, height=(int)1080, format=(string)BGRA, framerate=(fraction)10000000/333333"
+  " ! video/x-raw, width=(int)1920, height=(int)1080, format=(string)UYVY, framerate=(fraction)10000000/333333"
   " ! videoconvert"
   " ! timeoverlay font-desc=\"Sans Bold 36\" valignment=\"bottom\" halignment=\"right\""
   " ! tee name=t"
