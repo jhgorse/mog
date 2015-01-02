@@ -18,8 +18,6 @@
 /// @brief This file provides the "main" code to implement Milestone 3.
 ///
 /// @todo Figure out why sometimes we get stuck waiting for a buffer from the camera.
-/// @todo Does the receiver pipeline die if a sender starts sending after a long period of time?
-/// @todo osxaudiosrc not actually using microphone sound? Need a different device?
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <signal.h>             // for Posix signal-handling
