@@ -34,7 +34,7 @@ const char SenderPipeline::PIPELINE_STRING[] =
 	" ! x264enc bitrate=5000 speed-preset=ultrafast tune=zerolatency"
 	" ! rtph264pay"
 	" ! rtpbin.send_rtp_sink_0"
-	"   osxaudiosrc do-timestamp=true latency-time=21333 buffer-time=21333"
+	"   osxaudiosrc do-timestamp=true latency-time=23220 buffer-time=92880 device=48"
 	" ! audio/x-raw, format=(string)S32LE, layout=(string)interleaved, rate=(int)44100, channels=(int)1"
 	" ! audioconvert"
 	" ! rtpL16pay buffer-list=true"
