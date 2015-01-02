@@ -21,7 +21,15 @@
 #include <cassert>              // for assert
 #include "ReceiverPipeline.hpp" // for class declaration
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// A note about this pipeline: this pipeline utilizes sometimes pads for the "downstream" links
+/// from rtpbin. So the sometimes pads get linked up when the bin first receives data from an SSRC.
+/// However, if the sender gets restarted and a different SSRC is chosen, the bin will make new
+/// ghost pads and inner bin elements, but the downstream sometimes pads will not be linked, and
+/// the stream will stop. This needs to be dealt with in a proper app either by:
+///   (1) Sensibly choosing the SSRC so it's known a priori and not randomly chosen, or
+///   (2) Dynamically dealing with pad linkages and unlinkages in callback functions.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 const char ReceiverPipeline::PIPELINE_STRING[] =
 	"   rtpbin name=rtpbin latency=10"
 	"   udpsrc address=\"%s\" port=10000"
