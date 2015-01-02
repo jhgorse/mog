@@ -53,7 +53,7 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	"   rtpbin."
 	" ! rtpL16depay"
 	" ! audioconvert"
-	" ! osxaudiosink enable-last-sample=false buffer-time=30000"
+	" ! osxaudiosink enable-last-sample=false buffer-time=92880"
 ;
 
 
