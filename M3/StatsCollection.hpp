@@ -21,7 +21,6 @@
 #ifndef __STATS_COLLECTION_HPP__
 #define __STATS_COLLECTION_HPP__
 
-#include <cassert> // for assert
 #include <cmath>   // for math stuff
 #include <cstddef> // for standard type declarations
 
@@ -93,9 +92,12 @@ public:
 			m_Total -= itemRemoved;
 			m_TotalSquared -= (itemRemoved * itemRemoved);
 			
-			// Ensure we didn't overflow
-			assert(m_Total <= oldTotal);
-			assert(m_TotalSquared <= oldTotalSquared);
+			// Ensure we didn't overflow; if we did, just clear everything for now.
+			if ((m_Total > oldTotal) || (m_TotalSquared > oldTotalSquared))
+			{
+				Clear();
+				return;
+			}
 
 			// Increment the remove index & decrement the count
 			m_RemoveIndex = (m_RemoveIndex + 1) % m_Capacity;
@@ -111,9 +113,12 @@ public:
 		m_Total += item;
 		m_TotalSquared += (item * item);
 		
-		// Ensure we didn't overflow
-		assert(m_Total >= oldTotal);
-		assert(m_TotalSquared >= oldTotalSquared);
+		// Ensure we didn't overflow; if we did, just clear everything for now.
+		if ((m_Total < oldTotal) || (m_TotalSquared < oldTotalSquared))
+		{
+			Clear();
+			return;
+		}
 
 		// Increment the insert index and increment the count
 		m_InsertIndex = (m_InsertIndex + 1) % m_Capacity;
