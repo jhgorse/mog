@@ -35,13 +35,15 @@ class ReceiverPipeline : public PipelineBase
 {
 public:
 	/// Constructor
-	inline explicit ReceiverPipeline(const char* address)
-		: PipelineBase(ParsePipeline(address))
-	{}
+	explicit ReceiverPipeline(const char* address);
 	
 	
 	/// Destructor
-	virtual ~ReceiverPipeline() {}
+	virtual ~ReceiverPipeline();
+	
+	
+	/// (Instance) callback for when pads are added to rtpbin
+	void OnRtpBinPadAdded(GstElement* element, GstPad* pad);
 	
 
 protected:
@@ -55,9 +57,28 @@ private:
 	static const char PIPELINE_STRING[];
 	
 	
+	/// (Static) callback for when pads are added to rtpbin
+	static void StaticOnRtpBinPadAdded(GstElement* element, GstPad* pad, gpointer data);
+	
+	
+	/// Get a sink pad by name on an element. Properly unrefs intermediate stuff (for use in ctor).
+	static GstPad* GetElementSinkPad(const GstBin* bin, const char* element_name, const char* pad_name);
+	
+	
 	/// Parse the launch string, interpreted with address, into a pipeline.
 	static GstElement* ParsePipeline(const char* address);
 	
+	
+	/// Reference to rtpbin element
+	GstElement* const m_pRtpBin;
+	
+	
+	/// Reference to sink pad of video depayloader
+	GstPad* const m_pVideoDepayloaderSinkPad;
+	
+	
+	/// Reference to sink pad of audio depayloader
+	GstPad* const m_pAudioDepayloaderSinkPad;
 }; // END class ReceiverPipeline
 
 #endif // __RECEIVER_PIPELINE_HPP__

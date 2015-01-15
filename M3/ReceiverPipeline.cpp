@@ -19,6 +19,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <cassert>              // for assert
+#include "gst_utility.hpp"      // for gst_element_find_sink_pad_by_name
 #include "ReceiverPipeline.hpp" // for class declaration
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -45,16 +46,118 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	" ! application/x-rtcp"
 	" ! rtpbin.recv_rtcp_sink_1"
 	"   rtpbin."
-	" ! rtph264depay"
+	" ! rtph264depay name=vdepay"
 	" ! video/x-h264,stream-format=avc,alignment=au"
 	" ! avdec_h264"
 	" ! videoconvert"
 	" ! osxvideosink enable-last-sample=false sync=false"
 	"   rtpbin."
-	" ! rtpL16depay"
+	" ! rtpL16depay name=adepay"
 	" ! audioconvert"
 	" ! osxaudiosink enable-last-sample=false buffer-time=92880"
 ;
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Constructor.
+///
+/// Parse the launch string to construct the pipeline; obtain some references; and install a
+/// callback function for when pads are added to rtpbin.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+ReceiverPipeline::ReceiverPipeline(const char* address)
+	: PipelineBase(ParsePipeline(address))
+	, m_pRtpBin(gst_bin_get_by_name(GST_BIN(Pipeline()), "rtpbin"))
+	, m_pVideoDepayloaderSinkPad(GetElementSinkPad(GST_BIN(Pipeline()), "vdepay", "sink"))
+	, m_pAudioDepayloaderSinkPad(GetElementSinkPad(GST_BIN(Pipeline()), "adepay", "sink"))
+{
+	assert(m_pRtpBin != NULL);
+	assert(m_pVideoDepayloaderSinkPad != NULL);
+	assert(m_pAudioDepayloaderSinkPad != NULL);
+	g_signal_connect(m_pRtpBin, "pad-added", G_CALLBACK(StaticOnRtpBinPadAdded), this);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Destructor.
+///
+/// Release references obtained in constructor.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+ReceiverPipeline::~ReceiverPipeline()
+{
+	gst_object_unref(m_pAudioDepayloaderSinkPad);
+	gst_object_unref(m_pVideoDepayloaderSinkPad);
+	gst_object_unref(m_pRtpBin);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Callback function for when pads are added to rtpbin.
+///
+/// Because the (sender) RtpBins randomly create new SSRCs, if another entity was stopped and
+/// relaunched, the (receiver) rtpbin element will create a new dynamic src pad for the new ssrc.
+/// In this callback, we disconnect any existing link to the appropriate payloader and connect the
+/// new pad (so there's only one at a time).
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void ReceiverPipeline::OnRtpBinPadAdded(GstElement* element, GstPad* pad)
+{
+	assert(element == m_pRtpBin);
+	
+	// Check the media member of the caps to see what we've received. Point sink_pad at the
+	// sink pad for that media type.
+	GstCaps* pad_caps = gst_pad_get_current_caps(pad);
+	const gchar* media_type = g_value_get_string(gst_structure_get_value(gst_caps_get_structure(pad_caps, 0), "media"));
+	GstPad* sink_pad = NULL;
+	if (g_strcmp0(media_type, "audio") == 0)
+	{
+		sink_pad = m_pAudioDepayloaderSinkPad;
+	}
+	else if (g_strcmp0(media_type, "video") == 0)
+	{
+		sink_pad = m_pVideoDepayloaderSinkPad;
+	}
+	else
+	{
+		const gchar* pad_name = gst_pad_get_name(pad);
+		const gchar* caps_string = gst_caps_to_string(pad_caps);
+		g_message("Pad \"%s\" with caps \"%s\" added to rtpbin! Not a known media type!", pad_name, caps_string);
+		g_free(const_cast<gchar*>(caps_string));
+		g_free(const_cast<gchar*>(pad_name));
+	}
+	
+	// If we found a sink pad, then get its peer (the current rtpbin src pad), unlink it, and
+	// link it to the new src pad.
+	if (sink_pad != NULL)
+	{
+		GstPad* src_pad = gst_pad_get_peer(sink_pad);
+		gst_pad_unlink(src_pad, sink_pad);
+		gst_pad_link(pad, sink_pad);
+		gst_object_unref(src_pad);
+	}
+	
+	gst_caps_unref(pad_caps);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Static callback function for when pads are added to rtpbin. Calls the instance version.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void ReceiverPipeline::StaticOnRtpBinPadAdded(GstElement* element, GstPad* pad, gpointer data)
+{
+	((ReceiverPipeline *)data)->OnRtpBinPadAdded(element, pad);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Obtain an element's sink pad by name. Unrefs the intermediate objects. For use in the ctor's
+/// member initialization list.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+GstPad* ReceiverPipeline::GetElementSinkPad(const GstBin* bin, const char* element_name, const char* pad_name)
+{
+	GstElement* element = gst_bin_get_by_name(const_cast<GstBin*>(bin), element_name);
+	GstPad* ret = gst_element_find_sink_pad_by_name(element, pad_name);
+	gst_object_unref(element);
+	return ret;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
