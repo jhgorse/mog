@@ -23,6 +23,9 @@
 
 
 #include <gst/gst.h>          // for GStreamer stuff
+#include <string>             // for vector
+#include <vector>             // for vector
+
 #include "PipelineBase.hpp"   // for PipelineBase
 #include "PipelineTracer.hpp" // for PipelineTracer
 
@@ -42,8 +45,12 @@ public:
 	virtual ~SenderPipeline();
 	
 	
-	/// Set the destination IP address or hostname
-	void SetDestination(const char* destination);
+	/// Add the destination IP address or hostname
+	void AddDestination(const char* destination);
+	
+	
+	/// Remove the destination IP address or hostname
+	void RemoveDestination(const char* destination);
 	
 	
 	/// Set the video bitrate
@@ -54,6 +61,10 @@ protected:
 
 
 private:
+	/// Internally set the destinations for the pipeline
+	void SetDestinations();
+	
+	
 	///////////////////////////////////////////////////////////////////////////////////////////////
 	/// This string is the pipeline created for this milestone. There are a lot of "hard-coded"
 	/// things here that should be made more fluid and configurable in future milestones.
@@ -74,6 +85,9 @@ private:
 	
 	/// Pointer to audio RTCP sink element
 	GstElement* const m_pAudioRtcpSink;
+	
+	// Vector of destination addresses
+	std::vector<const std::string*> m_vDestinations;
 	
 }; // END class SenderPipeline
 

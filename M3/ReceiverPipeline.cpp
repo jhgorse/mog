@@ -33,28 +33,18 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 const char ReceiverPipeline::PIPELINE_STRING[] =
 	"   rtpbin name=rtpbin latency=10"
-	"   udpsrc address=\"%s\" port=10000"
+	"   udpsrc port=10000"
 	" ! application/x-rtp,media=video,clock-rate=90000,encoding-name=H264,sprop-parameter-sets=\"Z3oAH7y0AoAt2AiAAosKgJiWgEeMGVA\\=\\,aM48gA\\=\\=\",payload=96"
 	" ! rtpbin.recv_rtp_sink_0"
-	"   udpsrc address=\"%s\" port=10001"
+	"   udpsrc port=10001"
 	" ! application/x-rtcp"
 	" ! rtpbin.recv_rtcp_sink_0"
-	"   udpsrc address=\"%s\" port=10002"
+	"   udpsrc port=10002"
 	" ! application/x-rtp,media=audio,clock-rate=48000,encoding-name=L16,encoding-params=1,channels=1,payload=96"
 	" ! rtpbin.recv_rtp_sink_1"
-	"   udpsrc address=\"%s\" port=10003"
+	"   udpsrc port=10003"
 	" ! application/x-rtcp"
 	" ! rtpbin.recv_rtcp_sink_1"
-	"   rtpbin."
-	" ! rtph264depay name=vdepay"
-	" ! video/x-h264,stream-format=avc,alignment=au"
-	" ! avdec_h264"
-	" ! videoconvert"
-	" ! osxvideosink enable-last-sample=false sync=false"
-	"   rtpbin."
-	" ! rtpL16depay name=adepay"
-	" ! audioconvert"
-	" ! osxaudiosink enable-last-sample=false buffer-time=92880"
 ;
 
 
@@ -64,15 +54,11 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 /// Parse the launch string to construct the pipeline; obtain some references; and install a
 /// callback function for when pads are added to rtpbin.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-ReceiverPipeline::ReceiverPipeline(const char* address)
-	: PipelineBase(ParsePipeline(address))
+ReceiverPipeline::ReceiverPipeline()
+	: PipelineBase(gst_parse_launch(PIPELINE_STRING, NULL))
 	, m_pRtpBin(gst_bin_get_by_name(GST_BIN(Pipeline()), "rtpbin"))
-	, m_pVideoDepayloaderSinkPad(GetElementSinkPad(GST_BIN(Pipeline()), "vdepay", "sink"))
-	, m_pAudioDepayloaderSinkPad(GetElementSinkPad(GST_BIN(Pipeline()), "adepay", "sink"))
 {
 	assert(m_pRtpBin != NULL);
-	assert(m_pVideoDepayloaderSinkPad != NULL);
-	assert(m_pAudioDepayloaderSinkPad != NULL);
 	g_signal_connect(m_pRtpBin, "pad-added", G_CALLBACK(StaticOnRtpBinPadAdded), this);
 }
 
@@ -84,8 +70,6 @@ ReceiverPipeline::ReceiverPipeline(const char* address)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ReceiverPipeline::~ReceiverPipeline()
 {
-	gst_object_unref(m_pAudioDepayloaderSinkPad);
-	gst_object_unref(m_pVideoDepayloaderSinkPad);
 	gst_object_unref(m_pRtpBin);
 }
 
@@ -106,14 +90,75 @@ void ReceiverPipeline::OnRtpBinPadAdded(GstElement* element, GstPad* pad)
 	// sink pad for that media type.
 	GstCaps* pad_caps = gst_pad_get_current_caps(pad);
 	const gchar* media_type = g_value_get_string(gst_structure_get_value(gst_caps_get_structure(pad_caps, 0), "media"));
-	GstPad* sink_pad = NULL;
+	
 	if (g_strcmp0(media_type, "audio") == 0)
 	{
-		sink_pad = m_pAudioDepayloaderSinkPad;
+		g_message("on-pad-added (audio)");
+		
+		GstElement* depay = gst_element_factory_make("rtpL16depay", NULL);
+		assert(depay != NULL);
+		
+		GstElement* convert = gst_element_factory_make("audioconvert", NULL);
+		assert(convert != NULL);
+		
+		GstElement* audiosink = gst_element_factory_make("osxaudiosink", NULL);
+		assert(audiosink != NULL);
+		g_object_set(audiosink,
+			"enable-last-sample", FALSE,
+			"buffer-time", 92880,
+			NULL
+		);
+		
+		gst_bin_add_many(GST_BIN(Pipeline()), depay, convert, audiosink, NULL);
+		assert (gst_element_link_many(depay, convert, audiosink, NULL));
+		
+		GstPad* sink = gst_element_get_static_pad(depay, "sink");
+		assert(sink != NULL);
+		gst_pad_link(pad, sink);
+		gst_object_unref(sink);
+		
+		gst_element_sync_state_with_parent(depay);
+		gst_element_sync_state_with_parent(convert);
+		gst_element_sync_state_with_parent(audiosink);
 	}
 	else if (g_strcmp0(media_type, "video") == 0)
 	{
-		sink_pad = m_pVideoDepayloaderSinkPad;
+		g_message("on-pad-added (video)");
+		
+		GstElement* depay = gst_element_factory_make("rtph264depay", NULL);
+		assert(depay != NULL);
+		
+		GstElement* filter = gst_element_factory_make("capsfilter", NULL);
+		gst_util_set_object_arg(G_OBJECT(filter), "caps", "video/x-h264,stream-format=avc,alignment=au");
+		assert(filter != NULL);
+		
+		GstElement* decoder = gst_element_factory_make("avdec_h264", NULL);
+		assert(decoder != NULL);
+		
+		GstElement* convert = gst_element_factory_make("videoconvert", NULL);
+		assert(convert != NULL);
+		
+		GstElement* videosink = gst_element_factory_make("osxvideosink", NULL);
+		assert(videosink != NULL);
+		g_object_set(videosink,
+			"enable-last-sample", FALSE,
+			"sync", FALSE,
+			NULL
+		);
+
+		gst_bin_add_many(GST_BIN(Pipeline()), depay, filter, decoder, convert, videosink, NULL);
+		assert (gst_element_link_many(depay, filter, decoder, convert, videosink, NULL));
+		
+		GstPad* sink = gst_element_get_static_pad(depay, "sink");
+		assert(sink != NULL);
+		assert (gst_pad_link(pad, sink) == GST_PAD_LINK_OK);
+		gst_object_unref(sink);
+		
+		gst_element_sync_state_with_parent(depay);
+		gst_element_sync_state_with_parent(filter);
+		gst_element_sync_state_with_parent(decoder);
+		gst_element_sync_state_with_parent(convert);
+		gst_element_sync_state_with_parent(videosink);
 	}
 	else
 	{
@@ -122,16 +167,6 @@ void ReceiverPipeline::OnRtpBinPadAdded(GstElement* element, GstPad* pad)
 		g_message("Pad \"%s\" with caps \"%s\" added to rtpbin! Not a known media type!", pad_name, caps_string);
 		g_free(const_cast<gchar*>(caps_string));
 		g_free(const_cast<gchar*>(pad_name));
-	}
-	
-	// If we found a sink pad, then get its peer (the current rtpbin src pad), unlink it, and
-	// link it to the new src pad.
-	if (sink_pad != NULL)
-	{
-		GstPad* src_pad = gst_pad_get_peer(sink_pad);
-		gst_pad_unlink(src_pad, sink_pad);
-		gst_pad_link(pad, sink_pad);
-		gst_object_unref(src_pad);
 	}
 	
 	gst_caps_unref(pad_caps);
@@ -144,30 +179,4 @@ void ReceiverPipeline::OnRtpBinPadAdded(GstElement* element, GstPad* pad)
 void ReceiverPipeline::StaticOnRtpBinPadAdded(GstElement* element, GstPad* pad, gpointer data)
 {
 	((ReceiverPipeline *)data)->OnRtpBinPadAdded(element, pad);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Obtain an element's sink pad by name. Unrefs the intermediate objects. For use in the ctor's
-/// member initialization list.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-GstPad* ReceiverPipeline::GetElementSinkPad(const GstBin* bin, const char* element_name, const char* pad_name)
-{
-	GstElement* element = gst_bin_get_by_name(const_cast<GstBin*>(bin), element_name);
-	GstPad* ret = gst_element_find_sink_pad_by_name(element, pad_name);
-	gst_object_unref(element);
-	return ret;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-/// Parse the launch string, interpreted with address, into a pipeline. This is used in the
-/// constructor to properly free data.
-///////////////////////////////////////////////////////////////////////////////////////////////
-GstElement* ReceiverPipeline::ParsePipeline(const char* address)
-{
-	const gchar* value = g_strdup_printf(PIPELINE_STRING, address, address, address, address);
-	GstElement* ret = gst_parse_launch(value, NULL);
-	g_free(const_cast<gchar*>(value));
-	return ret;
 }

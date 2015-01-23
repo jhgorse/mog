@@ -58,6 +58,7 @@ SenderPipeline::SenderPipeline()
 	, m_pVideoRtcpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "vcsink"))
 	, m_pAudioRtpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "asink"))
 	, m_pAudioRtcpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "acsink"))
+	, m_vDestinations()
 {
 	assert(m_pVideoEncoder != NULL);
 	assert(m_pVideoRtpSink != NULL);
@@ -84,27 +85,37 @@ SenderPipeline::~SenderPipeline()
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// SenderPipeline::SetDestination()
+/// SenderPipeline::AddDestination()
 ///
-/// Set the sender pipeline's destination address or hostname.
+/// Add a destination address or hostname to the sender's pipeline.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void SenderPipeline::SetDestination(const char* destination)
+void SenderPipeline::AddDestination(const char* destination)
 {
-	const gchar* clients_value = g_strdup_printf("%s:10000", destination);
-	g_object_set(m_pVideoRtpSink, "clients", clients_value, NULL);
-	g_free(const_cast<gchar*>(clients_value));
-	
-	clients_value = g_strdup_printf("%s:10001", destination);
-	g_object_set(m_pVideoRtcpSink, "clients", clients_value, NULL);
-	g_free(const_cast<gchar*>(clients_value));
-	
-	clients_value = g_strdup_printf("%s:10002", destination);
-	g_object_set(m_pAudioRtpSink, "clients", clients_value, NULL);
-	g_free(const_cast<gchar*>(clients_value));
-	
-	clients_value = g_strdup_printf("%s:10003", destination);
-	g_object_set(m_pAudioRtcpSink, "clients", clients_value, NULL);
-	g_free(const_cast<gchar*>(clients_value));
+	m_vDestinations.push_back(new std::string(destination));
+	SetDestinations();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// SenderPipeline::RemoveDestination()
+///
+/// Remove a destination address or hostname to the sender's pipeline.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void SenderPipeline::RemoveDestination(const char* destination)
+{
+	std::vector<const std::string*>::const_iterator it = m_vDestinations.begin();
+	while (it != m_vDestinations.end())
+	{
+		if ((*it)->compare(destination) == 0)
+		{
+			m_vDestinations.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+	SetDestinations();
 }
 
 
@@ -119,4 +130,42 @@ void SenderPipeline::SetBitrate(size_t bitrate)
 	// nearest integer.
 	bitrate = (size_t)round(((double)bitrate) / ((double)1024.0));
 	g_object_set(m_pVideoEncoder, "bitrate", bitrate, NULL);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// SenderPipeline::SetDestinations()
+///
+/// Internally set the destinations for the pipeline.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void SenderPipeline::SetDestinations()
+{
+	static const struct
+	{
+		GstElement* pElement;
+		const char pPortString[6];
+	}
+	pairs[] = 
+	{
+		{m_pVideoRtpSink,  "10000"},
+		{m_pVideoRtcpSink, "10001"},
+		{m_pAudioRtpSink,  "10002"},
+		{m_pAudioRtcpSink, "10003"},
+	};
+	
+	for (size_t i = 0; i < sizeof(pairs) / sizeof(pairs[0]); i++)
+	{
+		std::string clients;
+		for (std::vector<const std::string*>::const_iterator it = m_vDestinations.begin(); it != m_vDestinations.end(); ++it)
+		{
+			if (!clients.empty())
+			{
+				clients += ",";
+			}
+			clients += **it;
+			clients += ":";
+			clients += pairs[i].pPortString;
+		}
+		g_object_set(pairs[i].pElement, "clients", clients.c_str(), NULL);
+	}
 }

@@ -35,7 +35,7 @@ class ReceiverPipeline : public PipelineBase
 {
 public:
 	/// Constructor
-	explicit ReceiverPipeline(const char* address);
+	ReceiverPipeline();
 	
 	
 	/// Destructor
@@ -61,24 +61,8 @@ private:
 	static void StaticOnRtpBinPadAdded(GstElement* element, GstPad* pad, gpointer data);
 	
 	
-	/// Get a sink pad by name on an element. Properly unrefs intermediate stuff (for use in ctor).
-	static GstPad* GetElementSinkPad(const GstBin* bin, const char* element_name, const char* pad_name);
-	
-	
-	/// Parse the launch string, interpreted with address, into a pipeline.
-	static GstElement* ParsePipeline(const char* address);
-	
-	
 	/// Reference to rtpbin element
 	GstElement* const m_pRtpBin;
-	
-	
-	/// Reference to sink pad of video depayloader
-	GstPad* const m_pVideoDepayloaderSinkPad;
-	
-	
-	/// Reference to sink pad of audio depayloader
-	GstPad* const m_pAudioDepayloaderSinkPad;
 }; // END class ReceiverPipeline
 
 #endif // __RECEIVER_PIPELINE_HPP__

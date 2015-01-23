@@ -23,12 +23,11 @@
 #include <signal.h>             // for Posix signal-handling
 #include <stdio.h>              // for standard IO
 #include <cassert>              // for assert
-#include <vector>               // for std::vector
 #include "ReceiverPipeline.hpp" // for SenderPipeline
 #include "SenderPipeline.hpp"   // for SenderPipeline
 
 
-static std::vector<ReceiverPipeline*> s_vReceivers;
+static ReceiverPipeline* s_pReceiverPipeline;
 static SenderPipeline* s_pSenderPipeline;
 static GMainLoop* s_pLoop;
 static const size_t VIDEO_BITRATE = 5000000;
@@ -87,15 +86,6 @@ static gboolean BusMessage(GstBus* bus, GstMessage* msg, gpointer data)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
 {
-	// Parse the target hostname/IP
-	if (argc < 2)
-	{
-		fprintf(stderr, "Usage: %s [send host or ip] [receive host or ip 1] [receive host or ip 2]...\n", argv[0]);
-		return -1;
-	}
-	const char* target = argv[1];
-	assert(target != NULL);
-	
 	// Initialize GStreamer
 	gst_init(&argc, &argv);
 	
@@ -105,21 +95,17 @@ int main(int argc, char *argv[])
 	// Create pipelines
 	s_pSenderPipeline = new SenderPipeline();
 	s_pSenderPipeline->AddBusWatch(BusMessage);
-	s_pSenderPipeline->SetDestination(target);
 	s_pSenderPipeline->SetBitrate(VIDEO_BITRATE);
-	for (int i = 2; i < argc; ++i)
+	for (int i = 1; i < argc; ++i)
 	{
-		ReceiverPipeline *p = new ReceiverPipeline(argv[i]);
-		p->AddBusWatch(BusMessage);
-		s_vReceivers.push_back(p);
+		s_pSenderPipeline->AddDestination(argv[i]);
 	}
+	s_pReceiverPipeline = new ReceiverPipeline();
+	s_pReceiverPipeline->AddBusWatch(BusMessage);
 
 	// Put the pipelines in the playing state
 	s_pSenderPipeline->Play();
-	for (std::vector<ReceiverPipeline*>::iterator it = s_vReceivers.begin(); it != s_vReceivers.end(); ++it)
-	{
-		(*it)->Play();
-	}
+	s_pReceiverPipeline->Play();
 	
 	// Assign the SIGINT handler to send EOS
 	struct sigaction sigact;
@@ -134,11 +120,7 @@ int main(int argc, char *argv[])
 
 	// Free resources
 	delete s_pSenderPipeline;
-	while (s_vReceivers.size() > 0)
-	{
-		delete s_vReceivers.back();
-		s_vReceivers.pop_back();
-	}
+	delete s_pReceiverPipeline;
 	
 	return 0;
 } // END main()
