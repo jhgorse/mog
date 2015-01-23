@@ -37,8 +37,17 @@
 class SenderPipeline : public PipelineBase
 {
 public:
+	/// An interface for notifying about new picture parameters
+	class IPictureParameterNotifySink
+	{
+	public:
+		virtual ~IPictureParameterNotifySink() {}
+		virtual void OnNewPictureParameters(const SenderPipeline& rPipeline, const char* pPictureParameters) = 0;
+	};
+	
+	
 	/// Constructor
-	SenderPipeline();
+	explicit SenderPipeline(IPictureParameterNotifySink* pNotifySink = NULL);
 	
 	
 	/// Destructor
@@ -103,6 +112,9 @@ private:
 	
 	/// Vector of destination addresses
 	std::vector<const std::string*> m_vDestinations;
+	
+	/// Vector of notify interfaces
+	IPictureParameterNotifySink* const m_pNotifySink;
 	
 	/// The video sprop parameter sets string
 	const char* m_pSpropParameterSets;

@@ -52,7 +52,7 @@ const char SenderPipeline::PIPELINE_STRING[] =
 ///
 /// Constructor. Create the pipeline from the static string representation.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-SenderPipeline::SenderPipeline()
+SenderPipeline::SenderPipeline(IPictureParameterNotifySink* pNotifySink)
 	: PipelineBase(gst_parse_launch(PIPELINE_STRING, NULL))
 	, m_pVideoEncoder(gst_bin_get_by_name(GST_BIN(Pipeline()), "venc"))
 	, m_pVideoRtpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "vsink"))
@@ -60,6 +60,7 @@ SenderPipeline::SenderPipeline()
 	, m_pAudioRtpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "asink"))
 	, m_pAudioRtcpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "acsink"))
 	, m_vDestinations()
+	, m_pNotifySink(pNotifySink)
 	, m_pSpropParameterSets(NULL)
 {
 	assert(m_pVideoEncoder != NULL);
@@ -157,6 +158,10 @@ void SenderPipeline::PadNotifyCaps(GObject* gobject, GParamSpec* pspec)
 	else
 	{
 		m_pSpropParameterSets = NULL;
+	}
+	if (m_pNotifySink != NULL)
+	{
+		m_pNotifySink->OnNewPictureParameters(*this, m_pSpropParameterSets);
 	}
 	gst_caps_unref(pad_caps);
 }
