@@ -46,6 +46,7 @@ const char SenderPipeline::PIPELINE_STRING[] =
 	"   rtpbin.send_rtcp_src_1 ! udpsink name=acsink enable-last-sample=false sync=false"
 ;
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// SenderPipeline::SenderPipeline()
 ///
@@ -59,12 +60,19 @@ SenderPipeline::SenderPipeline()
 	, m_pAudioRtpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "asink"))
 	, m_pAudioRtcpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "acsink"))
 	, m_vDestinations()
+	, m_pSpropParameterSets(NULL)
 {
 	assert(m_pVideoEncoder != NULL);
 	assert(m_pVideoRtpSink != NULL);
 	assert(m_pVideoRtcpSink != NULL);
 	assert(m_pAudioRtpSink != NULL);
 	assert(m_pAudioRtcpSink != NULL);
+	
+	// Receive a callback when the caps property of the vsink:sink pad changes
+	GstPad* pad = gst_element_get_static_pad(m_pVideoRtpSink, "sink");
+	assert(pad != NULL);
+	g_signal_connect(pad, "notify::caps", G_CALLBACK(StaticPadNotifyCaps), this);
+	gst_object_unref(pad);
 }
 
 
@@ -130,6 +138,27 @@ void SenderPipeline::SetBitrate(size_t bitrate)
 	// nearest integer.
 	bitrate = (size_t)round(((double)bitrate) / ((double)1024.0));
 	g_object_set(m_pVideoEncoder, "bitrate", bitrate, NULL);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// SenderPipeline::PadNotifyCaps()
+///
+/// Callback when a pad's caps change.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void SenderPipeline::PadNotifyCaps(GObject* gobject, GParamSpec* pspec)
+{
+	GstCaps* pad_caps = gst_pad_get_current_caps(reinterpret_cast<GstPad*>(gobject));
+	const GValue* val = gst_structure_get_value(gst_caps_get_structure(pad_caps, 0), "sprop-parameter-sets");
+	if ((val != NULL) && G_VALUE_HOLDS_STRING(val))
+	{
+		m_pSpropParameterSets = g_value_get_string(val);
+	}
+	else
+	{
+		m_pSpropParameterSets = NULL;
+	}
+	gst_caps_unref(pad_caps);
 }
 
 

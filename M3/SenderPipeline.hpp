@@ -56,11 +56,26 @@ public:
 	/// Set the video bitrate
 	void SetBitrate(size_t bitrate);
 	
+	
+	/// Get picture parameters
+	inline const char* GetPictureParameters() const { return m_pSpropParameterSets; }
+	
 
 protected:
 
 
 private:
+	/// (Static) callback for pad caps property change
+	static void StaticPadNotifyCaps(GObject* gobject, GParamSpec* pspec, gpointer user_data)
+	{
+		reinterpret_cast<SenderPipeline*>(user_data)->PadNotifyCaps(gobject, pspec);
+	}
+	
+	
+	/// (Instance) callback for pad caps property change
+	void PadNotifyCaps(GObject* gobject, GParamSpec* pspec);
+	
+	
 	/// Internally set the destinations for the pipeline
 	void SetDestinations();
 	
@@ -86,8 +101,11 @@ private:
 	/// Pointer to audio RTCP sink element
 	GstElement* const m_pAudioRtcpSink;
 	
-	// Vector of destination addresses
+	/// Vector of destination addresses
 	std::vector<const std::string*> m_vDestinations;
+	
+	/// The video sprop parameter sets string
+	const char* m_pSpropParameterSets;
 	
 }; // END class SenderPipeline
 
