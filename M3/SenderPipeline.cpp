@@ -19,6 +19,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <cassert>            // for assert
+#include <cmath>              // for round
 #include "SenderPipeline.hpp" // for class declaration
 
 
@@ -31,7 +32,7 @@ const char SenderPipeline::PIPELINE_STRING[] =
 	" ! tee name=t"
 	"   t. ! queue max-size-buffers=1 max-size-bytes=0 max-size-time=0 leaky=downstream silent=true ! videoconvert ! osxvideosink enable-last-sample=false sync=false"
 	"   t."
-	" ! x264enc bitrate=5000 speed-preset=ultrafast tune=zerolatency"
+	" ! x264enc name=venc speed-preset=ultrafast tune=zerolatency"
 	" ! rtph264pay"
 	" ! rtpbin.send_rtp_sink_0"
 	"   osxaudiosrc do-timestamp=true latency-time=23220 buffer-time=92880 device=48"
@@ -52,11 +53,13 @@ const char SenderPipeline::PIPELINE_STRING[] =
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 SenderPipeline::SenderPipeline()
 	: PipelineBase(gst_parse_launch(PIPELINE_STRING, NULL))
+	, m_pVideoEncoder(gst_bin_get_by_name(GST_BIN(Pipeline()), "venc"))
 	, m_pVideoRtpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "vsink"))
 	, m_pVideoRtcpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "vcsink"))
 	, m_pAudioRtpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "asink"))
 	, m_pAudioRtcpSink(gst_bin_get_by_name(GST_BIN(Pipeline()), "acsink"))
 {
+	assert(m_pVideoEncoder != NULL);
 	assert(m_pVideoRtpSink != NULL);
 	assert(m_pVideoRtcpSink != NULL);
 	assert(m_pAudioRtpSink != NULL);
@@ -76,6 +79,7 @@ SenderPipeline::~SenderPipeline()
 	gst_object_unref(m_pAudioRtpSink);
 	gst_object_unref(m_pVideoRtcpSink);
 	gst_object_unref(m_pVideoRtpSink);
+	gst_object_unref(m_pVideoEncoder);
 }
 
 
@@ -101,4 +105,18 @@ void SenderPipeline::SetDestination(const char* destination)
 	clients_value = g_strdup_printf("%s:10003", destination);
 	g_object_set(m_pAudioRtcpSink, "clients", clients_value, NULL);
 	g_free(const_cast<gchar*>(clients_value));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// SenderPipeline::SetBitrate()
+///
+/// Set the sender pipeline's video bitrate.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void SenderPipeline::SetBitrate(size_t bitrate)
+{
+	// The x264enc's bitrate property is in kbit/sec, so here we divide by 1024 and round to the
+	// nearest integer.
+	bitrate = (size_t)round(((double)bitrate) / ((double)1024.0));
+	g_object_set(m_pVideoEncoder, "bitrate", bitrate, NULL);
 }

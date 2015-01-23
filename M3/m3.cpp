@@ -31,6 +31,7 @@
 static std::vector<ReceiverPipeline*> s_vReceivers;
 static SenderPipeline* s_pSenderPipeline;
 static GMainLoop* s_pLoop;
+static const size_t VIDEO_BITRATE = 5000000;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,6 +106,7 @@ int main(int argc, char *argv[])
 	s_pSenderPipeline = new SenderPipeline();
 	s_pSenderPipeline->AddBusWatch(BusMessage);
 	s_pSenderPipeline->SetDestination(target);
+	s_pSenderPipeline->SetBitrate(VIDEO_BITRATE);
 	for (int i = 2; i < argc; ++i)
 	{
 		ReceiverPipeline *p = new ReceiverPipeline(argv[i]);

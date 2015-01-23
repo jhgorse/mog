@@ -45,6 +45,10 @@ public:
 	/// Set the destination IP address or hostname
 	void SetDestination(const char* destination);
 	
+	
+	/// Set the video bitrate
+	void SetBitrate(size_t bitrate);
+	
 
 protected:
 
@@ -55,6 +59,9 @@ private:
 	/// things here that should be made more fluid and configurable in future milestones.
 	///////////////////////////////////////////////////////////////////////////////////////////////
 	static const char PIPELINE_STRING[];
+
+	/// Pointer to video encoder element
+	GstElement* const m_pVideoEncoder;
 	
 	/// Pointer to video RTP sink element
 	GstElement* const m_pVideoRtpSink;
