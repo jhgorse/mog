@@ -150,10 +150,18 @@ void SenderPipeline::SetBitrate(size_t bitrate)
 void SenderPipeline::PadNotifyCaps(GObject* gobject, GParamSpec* pspec)
 {
 	GstCaps* pad_caps = gst_pad_get_current_caps(reinterpret_cast<GstPad*>(gobject));
-	const GValue* val = gst_structure_get_value(gst_caps_get_structure(pad_caps, 0), "sprop-parameter-sets");
-	if ((val != NULL) && G_VALUE_HOLDS_STRING(val))
+	if (pad_caps != NULL)
 	{
-		m_pSpropParameterSets = g_value_get_string(val);
+		const GValue* val = gst_structure_get_value(gst_caps_get_structure(pad_caps, 0), "sprop-parameter-sets");
+		if ((val != NULL) && G_VALUE_HOLDS_STRING(val))
+		{
+			m_pSpropParameterSets = g_value_get_string(val);
+		}
+		else
+		{
+			m_pSpropParameterSets = NULL;
+		}
+		gst_caps_unref(pad_caps);
 	}
 	else
 	{
@@ -163,7 +171,6 @@ void SenderPipeline::PadNotifyCaps(GObject* gobject, GParamSpec* pspec)
 	{
 		m_pNotifySink->OnNewPictureParameters(*this, m_pSpropParameterSets);
 	}
-	gst_caps_unref(pad_caps);
 }
 
 
