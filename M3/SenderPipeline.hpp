@@ -113,7 +113,7 @@ private:
 	/// Vector of destination addresses
 	std::vector<const std::string*> m_vDestinations;
 	
-	/// Vector of notify interfaces
+	/// Notify pointer
 	IPictureParameterNotifySink* const m_pNotifySink;
 	
 	/// The video sprop parameter sets string
