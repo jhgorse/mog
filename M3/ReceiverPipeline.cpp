@@ -54,12 +54,20 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 /// Parse the launch string to construct the pipeline; obtain some references; and install a
 /// callback function for when pads are added to rtpbin.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-ReceiverPipeline::ReceiverPipeline()
+ReceiverPipeline::ReceiverPipeline(IReceiverNotifySink* pNotifySink)
 	: PipelineBase(gst_parse_launch(PIPELINE_STRING, NULL))
+	, m_pNotifySink(pNotifySink)
+	, m_ActiveSsrcs()
 	, m_pRtpBin(gst_bin_get_by_name(GST_BIN(Pipeline()), "rtpbin"))
 {
 	assert(m_pRtpBin != NULL);
-	g_signal_connect(m_pRtpBin, "pad-added", G_CALLBACK(StaticOnRtpBinPadAdded), this);
+	g_signal_connect(m_pRtpBin, "on-bye-ssrc",       G_CALLBACK(StaticOnRtpBinByeSsrc),       this);
+	g_signal_connect(m_pRtpBin, "on-bye-timeout",    G_CALLBACK(StaticOnRtpBinByeTimeout),    this);
+	g_signal_connect(m_pRtpBin, "on-npt-stop",       G_CALLBACK(StaticOnRtpBinNptStop),       this);
+	g_signal_connect(m_pRtpBin, "pad-added",         G_CALLBACK(StaticOnRtpBinPadAdded),      this);
+	g_signal_connect(m_pRtpBin, "on-sender-timeout", G_CALLBACK(StaticOnRtpBinSenderTimeout), this);
+	g_signal_connect(m_pRtpBin, "on-ssrc-active",    G_CALLBACK(StaticOnRtpBinSsrcActive),    this);
+	g_signal_connect(m_pRtpBin, "on-timeout",        G_CALLBACK(StaticOnRtpBinTimeout),       this);
 }
 
 
@@ -71,6 +79,69 @@ ReceiverPipeline::ReceiverPipeline()
 ReceiverPipeline::~ReceiverPipeline()
 {
 	gst_object_unref(m_pRtpBin);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// (Static) callback for when an SSRC leaves (says bye)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void ReceiverPipeline::StaticOnRtpBinByeSsrc(GstElement* element, guint session, guint ssrc, gpointer data)
+{
+	((ReceiverPipeline *)data)->OnRtpBinSsrcDeactivate(((session == 0) ? IReceiverNotifySink::SSRC_TYPE_VIDEO : IReceiverNotifySink::SSRC_TYPE_AUDIO), ssrc, IReceiverNotifySink::SSRC_DEACTIVATE_REASON_BYE);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// (Static) callback for when an SSRC leaves (bye times out)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void ReceiverPipeline::StaticOnRtpBinByeTimeout(GstElement* element, guint session, guint ssrc, gpointer data)
+{
+	((ReceiverPipeline *)data)->OnRtpBinSsrcDeactivate(((session == 0) ? IReceiverNotifySink::SSRC_TYPE_VIDEO : IReceiverNotifySink::SSRC_TYPE_AUDIO), ssrc, IReceiverNotifySink::SSRC_DEACTIVATE_REASON_TIMEOUT);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// (Static) callback for when an SSRC leaves due to its stop time
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void ReceiverPipeline::StaticOnRtpBinNptStop(GstElement* element, guint session, guint ssrc, gpointer data)
+{
+	((ReceiverPipeline *)data)->OnRtpBinSsrcDeactivate(((session == 0) ? IReceiverNotifySink::SSRC_TYPE_VIDEO : IReceiverNotifySink::SSRC_TYPE_AUDIO), ssrc, IReceiverNotifySink::SSRC_DEACTIVATE_REASON_STOP);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Static callback function for when pads are added to rtpbin. Calls the instance version.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void ReceiverPipeline::StaticOnRtpBinPadAdded(GstElement* element, GstPad* pad, gpointer data)
+{
+	((ReceiverPipeline *)data)->OnRtpBinPadAdded(element, pad);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// (Static) callback for when an SSRC times out
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void ReceiverPipeline::StaticOnRtpBinSenderTimeout(GstElement* element, guint session, guint ssrc, gpointer data)
+{
+	((ReceiverPipeline *)data)->OnRtpBinSsrcDeactivate(((session == 0) ? IReceiverNotifySink::SSRC_TYPE_VIDEO : IReceiverNotifySink::SSRC_TYPE_AUDIO), ssrc, IReceiverNotifySink::SSRC_DEACTIVATE_REASON_TIMEOUT);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// (Static) callback for when an SSRC becomes active
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void ReceiverPipeline::StaticOnRtpBinSsrcActive(GstElement* element, guint session, guint ssrc, gpointer data)
+{
+	((ReceiverPipeline *)data)->OnRtpBinSsrcActivate(((session == 0) ? IReceiverNotifySink::SSRC_TYPE_VIDEO : IReceiverNotifySink::SSRC_TYPE_AUDIO), ssrc);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// (Static) callback for when an SSRC times out
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void ReceiverPipeline::StaticOnRtpBinTimeout(GstElement* element, guint session, guint ssrc, gpointer data)
+{
+	((ReceiverPipeline *)data)->OnRtpBinSsrcDeactivate(((session == 0) ? IReceiverNotifySink::SSRC_TYPE_VIDEO : IReceiverNotifySink::SSRC_TYPE_AUDIO), ssrc, IReceiverNotifySink::SSRC_DEACTIVATE_REASON_TIMEOUT);
 }
 
 
@@ -173,10 +244,27 @@ void ReceiverPipeline::OnRtpBinPadAdded(GstElement* element, GstPad* pad)
 }
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Static callback function for when pads are added to rtpbin. Calls the instance version.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void ReceiverPipeline::StaticOnRtpBinPadAdded(GstElement* element, GstPad* pad, gpointer data)
+/// (Instance) callback for when an SSRC becomes active
+void ReceiverPipeline::OnRtpBinSsrcActivate(ReceiverPipeline::IReceiverNotifySink::SsrcType type, unsigned int ssrc)
 {
-	((ReceiverPipeline *)data)->OnRtpBinPadAdded(element, pad);
+	if (m_ActiveSsrcs.find(ssrc) == m_ActiveSsrcs.end())
+	{
+		m_ActiveSsrcs.insert(ssrc);
+		if (m_pNotifySink != NULL)
+		{
+			m_pNotifySink->OnSsrcActivate(*this, type, ssrc);
+		}
+	}
+}
+	
+	
+/// (Instance) callback for when an SSRC becomes inactive
+void ReceiverPipeline::OnRtpBinSsrcDeactivate(ReceiverPipeline::IReceiverNotifySink::SsrcType type, unsigned int ssrc, ReceiverPipeline::IReceiverNotifySink::SsrcDeactivateReason reason)
+{
+	std::set<unsigned int>::iterator it;
+	if ((it = m_ActiveSsrcs.find(ssrc)) != m_ActiveSsrcs.end())
+	{
+		m_ActiveSsrcs.erase(it);
+		m_pNotifySink->OnSsrcDeactivate(*this, type, ssrc, reason);
+	}
 }

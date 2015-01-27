@@ -22,6 +22,7 @@
 #define __RECEIVER_PIPELINE_HPP__
 
 
+#include <set>                // for std::set
 #include <gst/gst.h>          // for GStreamer stuff
 #include "PipelineBase.hpp"   // for PipelineBase
 #include "PipelineTracer.hpp" // for PipelineTracer
@@ -34,16 +35,34 @@
 class ReceiverPipeline : public PipelineBase
 {
 public:
+	/// An interface for notifying about sender sessions
+	class IReceiverNotifySink
+	{
+	public:
+		enum SsrcType
+		{
+			SSRC_TYPE_VIDEO,
+			SSRC_TYPE_AUDIO
+		};
+		enum SsrcDeactivateReason
+		{
+			SSRC_DEACTIVATE_REASON_BYE,
+			SSRC_DEACTIVATE_REASON_STOP,
+			SSRC_DEACTIVATE_REASON_TIMEOUT,
+		};
+		
+		virtual ~IReceiverNotifySink() {}
+		virtual void OnSsrcActivate(const ReceiverPipeline& rPipeline, SsrcType type, unsigned int ssrc) = 0;
+		virtual void OnSsrcDeactivate(const ReceiverPipeline& rPipeline, SsrcType type, unsigned int ssrc, SsrcDeactivateReason reason) = 0;
+	};
+	
+	
 	/// Constructor
-	ReceiverPipeline();
+	explicit ReceiverPipeline(IReceiverNotifySink* pNotifySink = NULL);
 	
 	
 	/// Destructor
 	virtual ~ReceiverPipeline();
-	
-	
-	/// (Instance) callback for when pads are added to rtpbin
-	void OnRtpBinPadAdded(GstElement* element, GstPad* pad);
 	
 
 protected:
@@ -56,9 +75,53 @@ private:
 	///////////////////////////////////////////////////////////////////////////////////////////////
 	static const char PIPELINE_STRING[];
 	
+
+	/// (Static) callback for when an SSRC leaves (says bye)
+	static void StaticOnRtpBinByeSsrc(GstElement* element, guint session, guint ssrc, gpointer data);
+	
+	
+	/// (Static) callback for when an SSRC leaves (bye times out)
+	static void StaticOnRtpBinByeTimeout(GstElement* element, guint session, guint ssrc, gpointer data);
+	
+	
+	/// (Static) callback for when an SSRC leaves due to its stop time
+	static void StaticOnRtpBinNptStop(GstElement* element, guint session, guint ssrc, gpointer data);
+	
 	
 	/// (Static) callback for when pads are added to rtpbin
 	static void StaticOnRtpBinPadAdded(GstElement* element, GstPad* pad, gpointer data);
+	
+
+	/// (Static) callback for when an SSRC times out
+	static void StaticOnRtpBinSenderTimeout(GstElement* element, guint session, guint ssrc, gpointer data);
+	
+	
+	/// (Static) callback for when an SSRC becomes active
+	static void StaticOnRtpBinSsrcActive(GstElement* element, guint session, guint ssrc, gpointer data);
+	
+	
+	/// (Static) callback for when an SSRC times out
+	static void StaticOnRtpBinTimeout(GstElement* element, guint session, guint ssrc, gpointer data);
+	
+	
+	/// (Instance) callback for when pads are added to rtpbin
+	void OnRtpBinPadAdded(GstElement* element, GstPad* pad);
+	
+	
+	/// (Instance) callback for when an SSRC becomes active
+	void OnRtpBinSsrcActivate(IReceiverNotifySink::SsrcType type, unsigned int ssrc);
+	
+	
+	/// (Instance) callback for when an SSRC becomes inactive
+	void OnRtpBinSsrcDeactivate(IReceiverNotifySink::SsrcType type, unsigned int ssrc, IReceiverNotifySink::SsrcDeactivateReason reason);
+	
+	
+	/// Notify pointer
+	IReceiverNotifySink* const m_pNotifySink;
+	
+	
+	/// Set of active SSRCs
+	std::set<unsigned int> m_ActiveSsrcs;
 	
 	
 	/// Reference to rtpbin element
