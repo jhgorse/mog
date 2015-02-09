@@ -1,0 +1,8 @@
+{
+	"me": "192.168.2.1",
+	"participants": [
+		{"name": "Justin",  "address": "192.168.2.1"},
+		{"name": "James",   "address": "192.168.2.2"},
+		{"name": "Jessica", "address": "192.168.2.3"}
+	]
+}
