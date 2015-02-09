@@ -24,15 +24,6 @@
 #include "gst_utility.hpp"      // for gst_element_find_sink_pad_by_name
 #include "ReceiverPipeline.hpp" // for class declaration
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// A note about this pipeline: this pipeline utilizes sometimes pads for the "downstream" links
-/// from rtpbin. So the sometimes pads get linked up when the bin first receives data from an SSRC.
-/// However, if the sender gets restarted and a different SSRC is chosen, the bin will make new
-/// ghost pads and inner bin elements, but the downstream sometimes pads will not be linked, and
-/// the stream will stop. This needs to be dealt with in a proper app either by:
-///   (1) Sensibly choosing the SSRC so it's known a priori and not randomly chosen, or
-///   (2) Dynamically dealing with pad linkages and unlinkages in callback functions.
-///////////////////////////////////////////////////////////////////////////////////////////////////
 const char ReceiverPipeline::PIPELINE_STRING[] =
 	"   rtpbin name=rtpbin latency=10"
 	"   udpsrc port=10000"
@@ -86,15 +77,16 @@ ReceiverPipeline::~ReceiverPipeline()
 
 void ReceiverPipeline::ActivateVideoSsrc(unsigned int ssrc, const char* pictureParameters, void* windowHandle)
 {
-	char padName[sizeof("recv_rtp_src_1_4294967295_96")];
-	std::sprintf(padName, "recv_rtp_src_1_%u_96", ssrc);
+	char padName[sizeof("recv_rtp_src_0_4294967295_96")];
+	std::sprintf(padName, "recv_rtp_src_0_%u_96", ssrc);
 	GstPad* ssrcPad = gst_element_find_src_pad_by_name(m_pRtpBin, padName);
 	if (ssrcPad != NULL)
 	{
 		// Hook up a new video display chain here
 		GstElement* capsfilter = gst_element_factory_make("capsfilter", NULL);
 		GstCaps* caps = gst_caps_from_string("application/x-rtp,sprop-parameter-sets=\"\"");
-		GValue valParams;
+		GValue valParams = G_VALUE_INIT;
+		g_value_init(&valParams, G_TYPE_STRING);
 		g_value_set_string(&valParams, pictureParameters);
 		gst_structure_set_value(gst_caps_get_structure(caps, 0), "sprop-parameter-sets", &valParams);
 	    g_object_set(capsfilter,
@@ -127,9 +119,12 @@ void ReceiverPipeline::ActivateVideoSsrc(unsigned int ssrc, const char* pictureP
 		gst_bin_add_many(GST_BIN(Pipeline()), capsfilter, depay, filter, decoder, convert, videosink, NULL);
 		assert(gst_element_link_many(capsfilter, depay, filter, decoder, convert, videosink, NULL));
 		
-		GstPad* sink = gst_element_get_static_pad(depay, "sink");
+		GstPad* sink = gst_element_get_static_pad(capsfilter, "sink");
 		assert(sink != NULL);
-		assert (gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
+		GstPad *peer = gst_pad_get_peer(ssrcPad);
+		gst_pad_unlink(ssrcPad, peer);
+		gst_object_unref(peer);
+		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
 		gst_object_unref(sink);
 		
 		gst_element_sync_state_with_parent(capsfilter);
@@ -172,7 +167,7 @@ void ReceiverPipeline::ActivateAudioSsrc(unsigned int ssrc)
 		GstPad *peer = gst_pad_get_peer(ssrcPad);
 		gst_pad_unlink(ssrcPad, peer);
 		gst_object_unref(peer);
-		gst_pad_link(ssrcPad, sink);
+		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
 		gst_object_unref(sink);
 		
 		gst_element_sync_state_with_parent(depay);
@@ -198,7 +193,7 @@ void ReceiverPipeline::DeactivateVideoSsrc(unsigned int ssrc)
 		GstPad *peer = gst_pad_get_peer(ssrcPad);
 		gst_pad_unlink(ssrcPad, peer);
 		gst_object_unref(peer);
-		gst_pad_link(ssrcPad, sink);
+		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
 		gst_object_unref(sink);
 		
 		gst_element_sync_state_with_parent(fakesink);
@@ -222,7 +217,7 @@ void ReceiverPipeline::DeactivateAudioSsrc(unsigned int ssrc)
 		GstPad *peer = gst_pad_get_peer(ssrcPad);
 		gst_pad_unlink(ssrcPad, peer);
 		gst_object_unref(peer);
-		gst_pad_link(ssrcPad, sink);
+		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
 		gst_object_unref(sink);
 		
 		gst_element_sync_state_with_parent(fakesink);
@@ -318,7 +313,7 @@ void ReceiverPipeline::OnRtpBinPadAdded(GstElement* element, GstPad* pad)
 		
 		GstPad* sink = gst_element_get_static_pad(fakesink, "sink");
 		assert(sink != NULL);
-		gst_pad_link(pad, sink);
+		assert(gst_pad_link(pad, sink) == GST_PAD_LINK_OK);
 		gst_object_unref(sink);
 		
 		gst_element_sync_state_with_parent(fakesink);
