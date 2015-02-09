@@ -247,7 +247,6 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 		"do-timestamp", TRUE,
 		"device",       audioDeviceIndex,
 		NULL);
-	// TODO: Need to set latency-time=23220, buffer-time=92880?
 	
 	srccapsfilter = gst_element_factory_make("capsfilter", NULL);
 	caps = gst_caps_from_string(audioDeviceCaps);
