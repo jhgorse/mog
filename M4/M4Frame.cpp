@@ -94,7 +94,7 @@ M4Frame::M4Frame()
 			participantAddresses[i] = GetAddressForParticipant(m_ParticipantList[i].c_str());
 		}
 		participantAddresses[m_ParticipantList.GetCount()] = m_MyAddress.c_str();
-		m_Annunciator.SendParticipantList(participantAddresses, m_ParticipantList.GetCount());
+		m_Annunciator.SendParticipantList(participantAddresses, m_ParticipantList.GetCount() + 1);
 		delete[] participantAddresses;
 	}
 	else
@@ -185,7 +185,7 @@ void M4Frame::OnIdle(wxIdleEvent& evt)
 		// Create a new receiver pipeline and make it play; we will use its callbacks to hook
 		// up actual video.
 		m_pReceiverPipeline = new ReceiverPipeline(this);
-		m_pSenderPipeline->Play();
+		m_pReceiverPipeline->Play();
 		
 		// Disconnect the idle handler, as we're done now.
 		Disconnect(wxEVT_IDLE, wxIdleEventHandler(M4Frame::OnIdle));
@@ -256,6 +256,16 @@ void M4Frame::OnSsrcDeactivate(ReceiverPipeline& rPipeline, SsrcType type, unsig
 
 void M4Frame::OnParameterPacket(const char* address, const char* pictureParameters, unsigned int videoSsrc, unsigned int audioSsrc)
 {
+	if (std::strcmp(address, m_MyAddress.c_str()) == 0)
+	{
+		return;
+	}
+	
+	if (m_ParticipantByVideoSsrc[videoSsrc] != NULL)
+	{
+		return;
+	}
+	
 	std::printf("Received picture parameters \"%s\", video SSRC %u, audio SSRC %u from %s\n", pictureParameters, videoSsrc, audioSsrc, address);
 	
 	// Enter this participant in our dictionaries
