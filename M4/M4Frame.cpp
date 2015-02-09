@@ -17,7 +17,7 @@
 ///
 /// @brief This file defines the functions of the M4Frame class.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-#include <cstdio>
+
 #include <gst/gst.h>
 #include "M4Frame.hpp"
 #include "InputsDialog.hpp"
@@ -26,6 +26,13 @@
 #include "VideoPanel.hpp"
 #include "WaitForInvitationDialog.hpp"
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::M4Frame
+///
+/// Constructor. Walks through the startup workflow (via various dialogs) before displaying the
+/// main frame.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 M4Frame::M4Frame()
 	: wxFrame(NULL, wxID_ANY, wxT("Video Conferencing System"), wxDefaultPosition, wxSize(400, 150))
 	, m_Directory()
@@ -63,12 +70,15 @@ M4Frame::M4Frame()
 	}
 	startJoin->Destroy();
 	
+	// Load up the participant directory.
 	LoadDirectory();
 	
 	if (startOrJoin == StartJoinDialog::ID_START)
 	{
+		// If we're starting a meeting, create a dialog to allow the selection of participants.
 		InviteParticipantsDialog* inviteParticipants = new InviteParticipantsDialog(wxT("Select Participants to Invite"));
 		
+		// Configure the dialog with everyone in the directory except "me".
 		wxArrayString availableParticipants;
 		for (unsigned int i = 0; i < m_Directory.size(); ++i)
 		{
@@ -77,7 +87,6 @@ M4Frame::M4Frame()
 				availableParticipants.Add(m_Directory[i].name);
 			}
 		}
-		
 		inviteParticipants->SetAvailableParticipants(availableParticipants);
 		inviteParticipants->Centre();
 		if (inviteParticipants->ShowModal() == wxID_CANCEL)
@@ -160,48 +169,88 @@ M4Frame::M4Frame()
 	Connect(wxEVT_IDLE, wxIdleEventHandler(M4Frame::OnIdle));
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::~M4Frame
+///
+/// Destructor. Free allocated memory/stuff.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 M4Frame::~M4Frame()
 {
 	// TODO: Deallocate stuff
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::OnIdle
+///
+/// Called when there is idle time from the main GUI thread.
+///
+/// If we try to start GStreamer threads before the application's "main" event loop thread is
+/// running, then GStreamer will try to start its own "main" thread, and things won't work right.
+/// Hence, we do all the GStreamer startup from the "main" event loop idle time.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void M4Frame::OnIdle(wxIdleEvent& evt)
 {
-	if (m_pSenderPipeline == NULL)
+	assert(m_pSenderPipeline == NULL);
+
+	// Create a new sender pipeline with the chosen video and audio inputs and make it play.
+	m_pSenderPipeline = new SenderPipeline(videoInputName.c_str(), audioInputName.c_str(), this);
+	m_pSenderPipeline->SetBitrate(1000000);
+	m_pSenderPipeline->SetWindowSink(m_VideoPanels[0]->GetMediaPanelHandle());
+	for (size_t i = 0; i < std::min(m_ParticipantList.GetCount(), (size_t)5); ++i)
 	{
-		// Create a new sender pipeline with the chosen video and audio inputs and make it play.
-		m_pSenderPipeline = new SenderPipeline(videoInputName.c_str(), audioInputName.c_str(), this);
-		m_pSenderPipeline->SetBitrate(1000000);
-		m_pSenderPipeline->SetWindowSink(m_VideoPanels[0]->GetMediaPanelHandle());
-		for (size_t i = 0; i < std::min(m_ParticipantList.GetCount(), (size_t)5); ++i)
-		{
-			const char* address = GetAddressForParticipant(m_ParticipantList[i]);
-			assert(address != NULL);
-			m_pSenderPipeline->AddDestination(address);
-		}
-		
-		m_pSenderPipeline->Play();
-		
-		// Create a new receiver pipeline and make it play; we will use its callbacks to hook
-		// up actual video.
-		m_pReceiverPipeline = new ReceiverPipeline(this);
-		m_pReceiverPipeline->Play();
-		
-		// Disconnect the idle handler, as we're done now.
-		Disconnect(wxEVT_IDLE, wxIdleEventHandler(M4Frame::OnIdle));
+		const char* address = GetAddressForParticipant(m_ParticipantList[i]);
+		assert(address != NULL);
+		m_pSenderPipeline->AddDestination(address);
 	}
+	m_pSenderPipeline->Play();
+	
+	assert(m_pReceiverPipeline == NULL);
+
+	// Create a new receiver pipeline and make it play; we will use its callbacks to hook
+	// up actual video.
+	m_pReceiverPipeline = new ReceiverPipeline(this);
+	m_pReceiverPipeline->Play();
+	
+	// Disconnect the idle handler, as we're done now.
+	Disconnect(wxEVT_IDLE, wxIdleEventHandler(M4Frame::OnIdle));
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::OnNewParameters
+///
+/// Called by the sender pipeline when the sender parameters are available. Configure the
+/// annunciator to transmit these parameters to other participants.
+///
+/// @param rPipeline  The sender pipeline.
+///
+/// @param pPictureParameters  Picture parameters string.
+///
+/// @param videoSsrc  The video SSRC.
+///
+/// @param audioSsrc  The audio SSRC.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void M4Frame::OnNewParameters(const SenderPipeline& rPipeline, const char* pPictureParameters, unsigned int videoSsrc, unsigned int audioSsrc)
 {
-	// Configure conference annunciator to send my parameters to the other participants
 	m_Annunciator.SendParameters(pPictureParameters, videoSsrc, audioSsrc);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::OnSsrcActivate
+///
+/// Called by the receiver pipeline when an SSRC becomes active.
+///
+/// @param rPipeline  The receiver pipeline.
+///
+/// @param type  The SSRC type (video or audio).
+///
+/// @param ssrc  The SSRC.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void M4Frame::OnSsrcActivate(ReceiverPipeline& rPipeline, SsrcType type, unsigned int ssrc)
 {
-	std::printf("%s SSRC %u activated.\n", (type == ReceiverPipeline::IReceiverNotifySink::SSRC_TYPE_VIDEO) ? "video" : "audio", ssrc);
-	
 	// Look up the participant by SSRC.
 	Participant* p = NULL;
 	if (type == ReceiverPipeline::IReceiverNotifySink::SSRC_TYPE_VIDEO)
@@ -228,6 +277,7 @@ void M4Frame::OnSsrcActivate(ReceiverPipeline& rPipeline, SsrcType type, unsigne
 	}
 	else
 	{
+		// Already received parameters, so activate in the receiver pipeline.
 		if (type == ReceiverPipeline::IReceiverNotifySink::SSRC_TYPE_VIDEO)
 		{
 			VideoPanel* panel = GetPanelForAddress(p->address);
@@ -241,32 +291,61 @@ void M4Frame::OnSsrcActivate(ReceiverPipeline& rPipeline, SsrcType type, unsigne
 	}
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::OnSsrcDeactivate
+///
+/// Called by the receiver pipeline when an SSRC becomes inactive.
+///
+/// @param rPipeline  The receiver pipeline.
+///
+/// @param type  The SSRC type (video or audio).
+///
+/// @param ssrc  The SSRC.
+///
+/// @param reason  The reason the SSRC became inactive.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void M4Frame::OnSsrcDeactivate(ReceiverPipeline& rPipeline, SsrcType type, unsigned int ssrc, SsrcDeactivateReason reason)
 {
-	std::printf("%s SSRC %u deactivated due to %s.\n", (type == ReceiverPipeline::IReceiverNotifySink::SSRC_TYPE_VIDEO) ? "video" : "audio", ssrc, (reason == ReceiverPipeline::IReceiverNotifySink::SSRC_DEACTIVATE_REASON_BYE) ? "bye" : ((reason == ReceiverPipeline::IReceiverNotifySink::SSRC_DEACTIVATE_REASON_STOP) ? "stop" : "timeout"));
 	if (type == ReceiverPipeline::IReceiverNotifySink::SSRC_TYPE_VIDEO)
 	{
 		rPipeline.DeactivateVideoSsrc(ssrc);
+		m_ParticipantByVideoSsrc.erase(ssrc);
 	}
 	else
 	{
 		rPipeline.DeactivateAudioSsrc(ssrc);
+		m_ParticipantByAudioSsrc.erase(ssrc);
 	}
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::OnParameterPacket
+///
+/// Called by the annunciator when a parameter packet is received.
+///
+/// @param address  The address from which the parameters were received.
+///
+/// @param pictureParameters  The picture parameters string.
+///
+/// @param videoSsrc  The video SSRC.
+///
+/// @param audioSsrc  The audio SSRC.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void M4Frame::OnParameterPacket(const char* address, const char* pictureParameters, unsigned int videoSsrc, unsigned int audioSsrc)
 {
+	// Ignore if I got this from myself.
 	if (std::strcmp(address, m_MyAddress.c_str()) == 0)
 	{
 		return;
 	}
 	
+	// Ignore if we already have an active partipant with this SSRC.
 	if (m_ParticipantByVideoSsrc[videoSsrc] != NULL)
 	{
 		return;
 	}
-	
-	std::printf("Received picture parameters \"%s\", video SSRC %u, audio SSRC %u from %s\n", pictureParameters, videoSsrc, audioSsrc, address);
 	
 	// Enter this participant in our dictionaries
 	Participant* p = new Participant(address, pictureParameters, videoSsrc, audioSsrc);
@@ -293,18 +372,34 @@ void M4Frame::OnParameterPacket(const char* address, const char* pictureParamete
 		}
 	}
 }
- 
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::LoadDirectory
+///
+/// Load up the directory of participants.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void M4Frame::LoadDirectory()
 {
 	// TODO: Get these hard-coded values out of here
-	m_Directory.push_back(DirectoryEntry("James",   "192.168.117.227"));
-//	m_Directory.push_back(DirectoryEntry("Jessica", "192.168.117.133"));
+	m_Directory.push_back(DirectoryEntry("James",   "192.168.2.2"));
+	m_Directory.push_back(DirectoryEntry("Jessica", "192.168.2.3"));
 //	m_Directory.push_back(DirectoryEntry("Jimmy",   "192.168.117.134"));
 //	m_Directory.push_back(DirectoryEntry("Jocelyn", "192.168.117.135"));
-	m_Directory.push_back(DirectoryEntry("Justin",  "192.168.117.205"));
-	m_MyAddress = "192.168.117.205";
+	m_Directory.push_back(DirectoryEntry("Justin",  "192.168.2.1"));
+	m_MyAddress = "192.168.2.1";
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::GetAddressForParticipant
+///
+/// Get the address for a participant by name.
+///
+/// @param name  The name of the participant whose address should be looked up.
+///
+/// @return  A NULL-terminated address, or NULL if the name could not be found.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 const char* M4Frame::GetAddressForParticipant(const char* name)
 {
 	std::string needle(name);
@@ -318,6 +413,16 @@ const char* M4Frame::GetAddressForParticipant(const char* name)
 	return NULL;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::GetNameForAddress
+///
+/// Get the name for a participant's address.
+///
+/// @param address  The address of the participant whose name should be looked up.
+///
+/// @return  A std::string pointer, or NULL if the address could not be found.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 const std::string* M4Frame::GetNameForAddress(const std::string& address)
 {
 	for (std::vector<DirectoryEntry>::const_iterator cit = m_Directory.cbegin(); cit != m_Directory.cend(); ++cit)
@@ -330,6 +435,16 @@ const std::string* M4Frame::GetNameForAddress(const std::string& address)
 	return NULL;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::GetPanelForAddress
+///
+/// Get the video panel for a participant's address.
+///
+/// @param address  The address of the participant whose video panel should be looked located.
+///
+/// @return  A VideoPanel pointer, or NULL if the address could not be found.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 VideoPanel* M4Frame::GetPanelForAddress(const std::string& address)
 {
 	const std::string* pName = GetNameForAddress(address);

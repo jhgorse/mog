@@ -65,9 +65,19 @@ public:
 	virtual ~ReceiverPipeline();
 	
 	
+	/// Activate a video SSRC within the pipeline.
 	void ActivateVideoSsrc(unsigned int ssrc, const char* pictureParameters, void* windowHandle);
+	
+	
+	/// Activate an audio SSRC within the pipeline.
 	void ActivateAudioSsrc(unsigned int ssrc);
+	
+	
+	/// Deactivate a video SSRC within the pipeline.
 	void DeactivateVideoSsrc(unsigned int ssrc);
+	
+	
+	/// Deactivate an audio SSRC within the pipeline.
 	void DeactivateAudioSsrc(unsigned int ssrc);
 		
 
@@ -75,10 +85,7 @@ protected:
 
 
 private:
-	///////////////////////////////////////////////////////////////////////////////////////////////
-	/// This string is the pipeline created for this milestone. There are a lot of "hard-coded"
-	/// things here that should be made more fluid and configurable in future milestones.
-	///////////////////////////////////////////////////////////////////////////////////////////////
+	/// The "static" parts of the pipeline, as a string.
 	static const char PIPELINE_STRING[];
 	
 

@@ -20,6 +20,10 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #include "WaitForInvitationDialog.hpp"
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Constructor. Build a very basic GUI and wait for a call packet from the annunciator.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 WaitForInvitationDialog::WaitForInvitationDialog(ConferenceAnnunciator& annunciator)
 	: wxDialog(NULL, wxID_ANY, wxT("Waiting for meeting invitation..."), wxDefaultPosition, wxDefaultSize)
 	, m_Annunciator(annunciator)
@@ -34,12 +38,25 @@ WaitForInvitationDialog::WaitForInvitationDialog(ConferenceAnnunciator& annuncia
 	m_Annunciator.SetCallPacketListener(this);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// WaitForInvitationDialog::OnCancel
+///
+/// Called if the user clicks "Cancel"; dismissed the dialog unsuccessfully.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void WaitForInvitationDialog::OnCancel(wxCommandEvent &event)
 {
 	m_Annunciator.ClearCallPacketListener();
 	EndModal(wxID_CANCEL);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// WaitForInvitationDialog::OnCallPacket
+///
+/// Called when the annunciator receives a call packet; saves the list of participant addresses and
+/// dismisses the dialog successfully.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void WaitForInvitationDialog::OnCallPacket(const char* participantList[], size_t numberOfParticipants)
 {
 	m_AddressList.Clear();
@@ -52,6 +69,10 @@ void WaitForInvitationDialog::OnCallPacket(const char* participantList[], size_t
 	EndModal(wxID_OK);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// The event table.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 BEGIN_EVENT_TABLE(WaitForInvitationDialog, wxDialog)
 	EVT_BUTTON(wxID_CANCEL, WaitForInvitationDialog::OnCancel)
 END_EVENT_TABLE()

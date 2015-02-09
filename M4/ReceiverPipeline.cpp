@@ -24,6 +24,10 @@
 #include "gst_utility.hpp"      // for gst_element_find_sink_pad_by_name
 #include "ReceiverPipeline.hpp" // for class declaration
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// These are the mostly "static" parts of the pipeline, represented as a string in
+/// gst_parse_launch format.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 const char ReceiverPipeline::PIPELINE_STRING[] =
 	"   rtpbin name=rtpbin latency=10"
 	"   udpsrc port=10000"
@@ -75,8 +79,21 @@ ReceiverPipeline::~ReceiverPipeline()
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ReceiverPipeline::ActivateVideoSsrc()
+///
+/// Activate a video SSRC within the pipeline. This creates the necessary elements to depayload,
+/// decode, and display the video data, connecting its videosink to a native window handle.
+///
+/// @param ssrc  The SSRC to be activated.
+///
+/// @param pictureParameters  The picture parameters string.
+///
+/// @param windowHandle  The native window handle.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ReceiverPipeline::ActivateVideoSsrc(unsigned int ssrc, const char* pictureParameters, void* windowHandle)
 {
+	// Go looking for a recv rtp src pad with the name corresponding to this ssrc
 	char padName[sizeof("recv_rtp_src_0_4294967295_96")];
 	std::sprintf(padName, "recv_rtp_src_0_%u_96", ssrc);
 	GstPad* ssrcPad = gst_element_find_src_pad_by_name(m_pRtpBin, padName);
@@ -137,8 +154,17 @@ void ReceiverPipeline::ActivateVideoSsrc(unsigned int ssrc, const char* pictureP
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ReceiverPipeline::ActivateAudioSsrc()
+///
+/// Activate an audio SSRC within the pipeline. This creates the necessary elements to depayload,
+/// decode, and play back the audio data.
+///
+/// @param ssrc  The SSRC to be activated.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ReceiverPipeline::ActivateAudioSsrc(unsigned int ssrc)
 {
+	// Go looking for a recv rtp src pad with the name corresponding to this ssrc
 	char padName[sizeof("recv_rtp_src_1_4294967295_96")];
 	std::sprintf(padName, "recv_rtp_src_1_%u_96", ssrc);
 	GstPad* ssrcPad = gst_element_find_src_pad_by_name(m_pRtpBin, padName);
@@ -177,13 +203,22 @@ void ReceiverPipeline::ActivateAudioSsrc(unsigned int ssrc)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ReceiverPipeline::DeactivateVideoSsrc()
+///
+/// Deactivate a video SSRC within the pipeline.
+///
+/// @param ssrc  The SSRC to be deactivated.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ReceiverPipeline::DeactivateVideoSsrc(unsigned int ssrc)
 {
+	// Go looking for a recv rtp src pad with the name corresponding to this ssrc
 	char padName[sizeof("recv_rtp_src_0_4294967295_96")];
 	std::sprintf(padName, "recv_rtp_src_0_%u_96", ssrc);
 	GstPad* ssrcPad = gst_element_find_src_pad_by_name(m_pRtpBin, padName);
 	if (ssrcPad != NULL)
 	{
+		// Connect this pad to a fakesink
 		GstElement* fakesink = gst_element_factory_make("fakesink", NULL);
 		assert(fakesink != NULL);
 		gst_bin_add(GST_BIN(Pipeline()), fakesink);
@@ -201,13 +236,22 @@ void ReceiverPipeline::DeactivateVideoSsrc(unsigned int ssrc)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ReceiverPipeline::DeactivateAudioSsrc()
+///
+/// Deactivate an audio SSRC within the pipeline.
+///
+/// @param ssrc  The SSRC to be deactivated.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ReceiverPipeline::DeactivateAudioSsrc(unsigned int ssrc)
 {
+	// Go looking for a recv rtp src pad with the name corresponding to this ssrc
 	char padName[sizeof("recv_rtp_src_1_4294967295_96")];
 	std::sprintf(padName, "recv_rtp_src_1_%u_96", ssrc);
 	GstPad* ssrcPad = gst_element_find_src_pad_by_name(m_pRtpBin, padName);
 	if (ssrcPad != NULL)
 	{
+		// Connect this pad to a fakesink
 		GstElement* fakesink = gst_element_factory_make("fakesink", NULL);
 		assert(fakesink != NULL);
 		gst_bin_add(GST_BIN(Pipeline()), fakesink);
@@ -335,7 +379,11 @@ void ReceiverPipeline::OnRtpBinPadAdded(GstElement* element, GstPad* pad)
 }
 
 
-/// (Instance) callback for when an SSRC becomes active
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ReceiverPipeline::OnRtpBinSsrcActivate
+///
+/// (Instance) callback for when an SSRC becomes active. Calls the listener (if configured).
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ReceiverPipeline::OnRtpBinSsrcActivate(ReceiverPipeline::IReceiverNotifySink::SsrcType type, unsigned int ssrc)
 {
 	if (m_ActiveSsrcs.find(ssrc) == m_ActiveSsrcs.end())
@@ -347,9 +395,13 @@ void ReceiverPipeline::OnRtpBinSsrcActivate(ReceiverPipeline::IReceiverNotifySin
 		}
 	}
 }
-	
-	
-/// (Instance) callback for when an SSRC becomes inactive
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ReceiverPipeline::OnRtpBinSsrcActivate
+///
+/// (Instance) callback for when an SSRC becomes inactive. Calls the listener (if configured).
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ReceiverPipeline::OnRtpBinSsrcDeactivate(ReceiverPipeline::IReceiverNotifySink::SsrcType type, unsigned int ssrc, ReceiverPipeline::IReceiverNotifySink::SsrcDeactivateReason reason)
 {
 	std::set<unsigned int>::iterator it;

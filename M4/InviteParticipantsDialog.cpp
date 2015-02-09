@@ -18,8 +18,15 @@
 /// @brief This file declares the InviteParticipantsDialog class, which is a dialog for asking the
 /// user to invite participants to a call.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include "InviteParticipantsDialog.hpp"
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InviteParticipantsDialog::InviteParticipantsDialog
+///
+/// Constructor. Just builds the GUI.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 InviteParticipantsDialog::InviteParticipantsDialog(const wxString & title)
 	: wxDialog(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(400, 600))
 	, m_ParticipantListBox(NULL)
@@ -42,16 +49,34 @@ InviteParticipantsDialog::InviteParticipantsDialog(const wxString & title)
 	SetSizer(vbox);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InviteParticipantsDialog::OnOk
+///
+/// Close the dialog in a successful way.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void InviteParticipantsDialog::OnOk(wxCommandEvent &event)
 {
 	EndModal(wxID_OK);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InviteParticipantsDialog::OnCancel
+///
+/// Close the dialog in an unsuccessful way.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void InviteParticipantsDialog::OnCancel(wxCommandEvent &event)
 {
 	EndModal(wxID_CANCEL);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InviteParticipantsDialog::OnSelect
+///
+/// Called when the selection changes; allows us to conditionally enable the "Ok" button.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void InviteParticipantsDialog::OnSelect(wxCommandEvent &event)
 {
 	for (unsigned int i = 0; i < m_ParticipantListBox->GetCount(); ++i)
@@ -65,6 +90,13 @@ void InviteParticipantsDialog::OnSelect(wxCommandEvent &event)
 	m_OkButton->Disable();
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InviteParticipantsDialog::SetAvailableParticipants
+///
+/// Set the list of allowed participants in the dialog box. Should be called after construction,
+/// but before display.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void InviteParticipantsDialog::SetAvailableParticipants(const wxArrayString& list)
 {
 	for (unsigned int i = 0; i < list.GetCount(); ++i)
@@ -73,6 +105,12 @@ void InviteParticipantsDialog::SetAvailableParticipants(const wxArrayString& lis
 	}
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InviteParticipantsDialog::GetParticipantList
+///
+/// Get an array of selected participants.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 wxArrayString InviteParticipantsDialog::GetParticipantList() const
 {
 	wxArrayString list;
@@ -86,6 +124,10 @@ wxArrayString InviteParticipantsDialog::GetParticipantList() const
 	return list;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// The event table.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 BEGIN_EVENT_TABLE(InviteParticipantsDialog, wxDialog)
 	EVT_BUTTON(wxID_OK,     InviteParticipantsDialog::OnOk)
 	EVT_BUTTON(wxID_CANCEL, InviteParticipantsDialog::OnCancel)

@@ -24,24 +24,40 @@
 #include <wx/wx.h>
 #include "ConferenceAnnunciator.hpp"
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// This class displays a dialog while waiting for a meeting invitation.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 class WaitForInvitationDialog
 	: public wxDialog
 	, protected ConferenceAnnunciator::ICallPacketListener
 {
 public:
+	/// Constructor.
 	explicit WaitForInvitationDialog(ConferenceAnnunciator& annunciator);
 	
+	
+	/// Get the address list from the meeting invitation.
 	inline wxArrayString GetAddressList() { return m_AddressList; }
 	
+	
+	/// Called if the user clicks "Cancel".
 	void OnCancel(wxCommandEvent &event);
 
+
 protected:
+	/// Called by the annunciator when a call packet is received.
 	virtual void OnCallPacket(const char* participantList[], size_t numberOfParticipants);
+	
 	
 	DECLARE_EVENT_TABLE()
 
 private:
+	/// A reference to the conference annunciator.
 	ConferenceAnnunciator& m_Annunciator;
+	
+	
+	/// An array of participant addresses received from the annunciator.
 	wxArrayString m_AddressList;
 };
 

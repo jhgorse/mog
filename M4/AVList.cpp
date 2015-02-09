@@ -18,36 +18,27 @@
 /// @brief This file defines the functions of AVList and related classes.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <cassert>
-#include "AVList.hpp"
+#include <cassert>    // for assert
+#include "AVList.hpp" // for AVList and AVListEnumerator
 
 #if defined(__APPLE__)
+// Pull in the apple implementation
 #include "AppleAVListEnumerator.hpp"
 #endif
 
+
+/// The static (singleton) instance pointer.
 AVListEnumerator* AVListEnumerator::m_pTheInstance = NULL;
 
-AVList::AVList()
-	: m_VideoInputList()
-	, m_AudioInputList()
-{}
 
-void AVList::AddVideoInput(const std::string& name)
-{
-	m_VideoInputList.push_back(VideoInput(name));
-}
-
-void AVList::AddAudioInput(const std::string& name)
-{
-	m_AudioInputList.push_back(AudioInput(name));
-}
-
-void AVList::Clear()
-{
-	m_VideoInputList.clear();
-	m_AudioInputList.clear();
-}
-
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// AVListEnumerator::List()
+///
+/// Accessor to return the list of available A/V input devices.
+///
+/// If the singleton instance is not created, it will be created. So this isn't particularly
+/// thread-safe.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 const AVList& AVListEnumerator::List()
 {
 	if (m_pTheInstance == NULL)
@@ -62,18 +53,9 @@ const AVList& AVListEnumerator::List()
 	}
 	assert(m_pTheInstance != NULL);
 	
+	/// Clear the lists, then ask the implementation to enumerate.
 	m_pTheInstance->m_AvList.Clear();
 	m_pTheInstance->Enumerate();
 	
 	return m_pTheInstance->m_AvList;
-}
-
-void AVListEnumerator::AddVideoInput(const std::string& name)
-{
-	m_AvList.AddVideoInput(name);
-}
-
-void AVListEnumerator::AddAudioInput(const std::string& name)
-{
-	m_AvList.AddAudioInput(name);
 }

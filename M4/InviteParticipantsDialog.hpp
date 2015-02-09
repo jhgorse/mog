@@ -23,23 +23,48 @@
 
 #include <wx/wx.h>
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InviteParticipantsDialog
+///
+/// This class is a dialog box used to present a list of participants for a conference.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 class InviteParticipantsDialog : public wxDialog
 {
 public:
+	/// Constructor.
 	InviteParticipantsDialog(const wxString& title);
 	
+	
+	/// Called when "Ok" is clicked.
 	void OnOk(wxCommandEvent &event);
+	
+	
+	/// Called when "Cancel" is clicked.
 	void OnCancel(wxCommandEvent &event);
+	
+	
+	/// Called when the participant selection is changed.
 	void OnSelect(wxCommandEvent &event);
 	
+	
+	/// Configure the list of available participants.
 	void SetAvailableParticipants(const wxArrayString& list);
+	
+	
+	/// Get the list of selected participants.
 	wxArrayString GetParticipantList() const;
+	
 	
 protected:
 	DECLARE_EVENT_TABLE()
 	
 private:
+	/// The available participant list box.
 	wxListBox* m_ParticipantListBox;
+	
+	
+	/// The "Ok" button
 	wxButton* m_OkButton;
 };
 

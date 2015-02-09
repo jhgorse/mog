@@ -24,6 +24,16 @@
 #import <AVFoundation/AVFoundation.h>
 #include "SenderPipeline.hpp"
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// SenderPipeline::GetVideoDeviceIndex
+///
+/// Get the video device index for the given name.
+///
+/// @param inputName  The name of the video input.
+///
+/// @return  The integer device index, or -1 if the device name could not be found.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 int SenderPipeline::GetVideoDeviceIndex(const char* inputName)
 {
 	std::string requestedName(inputName);
@@ -39,6 +49,18 @@ int SenderPipeline::GetVideoDeviceIndex(const char* inputName)
 	}
 	return -1;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// SenderPipeline::GetVideoDeviceCaps
+///
+/// Get the capabilities string for the given index.
+///
+/// @param inputIndex  The index of the video input.
+///
+/// @return  A NULL-terminated capabilities string (allocated with "new char[...]"), or NULL if the
+/// given index could not be found. Should be freed with "delete[]".
+///////////////////////////////////////////////////////////////////////////////////////////////////
 const char* SenderPipeline::GetVideoDeviceCaps(int inputIndex)
 {
 	int width = 0, height = 0;
@@ -71,6 +93,17 @@ const char* SenderPipeline::GetVideoDeviceCaps(int inputIndex)
 	std::sprintf(result, "video/x-raw, width=(int)%d, height=(int)%d, framerate=(fraction)%d/%d", width, height, fps_n, fps_d);
 	return result;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// SenderPipeline::GetAudioDeviceIndex
+///
+/// Get the audio device index for the given name.
+///
+/// @param inputName  The name of the audio input.
+///
+/// @return  The integer device index, or -1 if the device name could not be found.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 int SenderPipeline::GetAudioDeviceIndex(const char* inputName)
 {
 	UInt32 inputNameLength = std::strlen(inputName);
@@ -113,6 +146,18 @@ int SenderPipeline::GetAudioDeviceIndex(const char* inputName)
 	
 	return -1;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// SenderPipeline::GetAudioDeviceCaps
+///
+/// Get the capabilities string for the given index.
+///
+/// @param inputIndex  The index of the audio input.
+///
+/// @return  A NULL-terminated capabilities string (allocated with "new char[...]"), or NULL if the
+/// given index could not be found. Should be freed with "delete[]".
+///////////////////////////////////////////////////////////////////////////////////////////////////
 const char* SenderPipeline::GetAudioDeviceCaps(int inputIndex)
 {
 #if 0

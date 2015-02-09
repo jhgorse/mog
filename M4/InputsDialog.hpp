@@ -25,19 +25,39 @@
 
 class AVList;
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// This class lists the available A/V input sources, allowing the user to choose inputs.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 class InputsDialog : public wxDialog
 {
 public:
+	/// Constructor.
 	InputsDialog(const wxString& title);
 	
+	
+	/// Called when "Ok" is clicked.
 	void OnOk(wxCommandEvent &event);
+	
+	
+	/// Called when "Cancel" is clicked.
 	void OnCancel(wxCommandEvent &event);
+	
+	
+	/// Called when the A/V boxes are changed.
 	void OnAVChoose(wxCommandEvent &event);
 	
+	
+	/// Accessor for the selected video input name.
 	std::string SelectedVideoInput() const;
+	
+	
+	/// Accessor for the selected audio input name.
 	std::string SelectedAudioInput() const;
 	
 protected:
+
+	/// Private event IDs.
 	enum
 	{
 		ID_VIDEO_CHOICE = wxID_HIGHEST + 1,
@@ -47,8 +67,15 @@ protected:
 	DECLARE_EVENT_TABLE()
 	
 private:
+	/// The Ok button.
 	wxButton* m_OkButton;
+	
+	
+	/// The available video input devices.
 	wxChoice* m_VideoChoice;
+	
+	
+	/// The available audio input devices.
 	wxChoice* m_AudioChoice;
 };
 

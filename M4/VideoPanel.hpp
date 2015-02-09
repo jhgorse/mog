@@ -23,15 +23,27 @@
 
 #include <wx/wx.h>
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// This class is a thin shim around a wxPanel that allows it to display video from GStreamer.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 class VideoPanel : public wxPanel
 {
 public:
+	/// Constructor.
 	VideoPanel(wxFrame* parent, const wxString &participantName);
 	
+	
+	/// Return the native window handle for this panel.
 	inline void* GetMediaPanelHandle() const { return m_MediaPanel->GetHandle(); }
 	
+	
 private:
+	/// The default size.
 	static const wxSize DEFAULT_MEDIA_PANEL_SIZE;
+	
+	
+	/// The inner video panel.
 	wxPanel* const m_MediaPanel;
 };
 

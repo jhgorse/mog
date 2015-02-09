@@ -66,6 +66,7 @@ public:
 	void SetBitrate(size_t bitrate);
 	
 	
+	/// Set the display window sink using a native window handle.
 	void SetWindowSink(void* handle);
 	
 	
@@ -77,15 +78,27 @@ protected:
 
 
 private:
+	/// The latency of the sender RTP bin, in milliseconds.
 	static const unsigned int RTP_BIN_LATENCY_MS = 10;
+	
 	
 	/// Function to build the sender pipeline. Needed for the constructor.
 	static GstElement* BuildPipeline(const char* videoInputName, const char* audioInputName);
 	
 	
+	/// Get the index of a video device by name.
 	static int GetVideoDeviceIndex(const char* inputName);
+	
+	
+	/// Get the capabilities for a video input device.
 	static const char* GetVideoDeviceCaps(int inputIndex);
+	
+	
+	/// Get the index of an audio device by name.
 	static int GetAudioDeviceIndex(const char* inputName);
+	
+	
+	/// Get the capabilities for an audio input device.
 	static const char* GetAudioDeviceCaps(int inputIndex);
 	
 	
@@ -107,32 +120,42 @@ private:
 	/// Pointer to video encoder element
 	GstElement* const m_pVideoEncoder;
 	
+	
 	/// Pointer to video RTP sink element
 	GstElement* const m_pVideoRtpSink;
+	
 	
 	/// Pointer to video RTCP sink element
 	GstElement* const m_pVideoRtcpSink;
 	
+	
 	/// Pointer to audio RTP sink element
 	GstElement* const m_pAudioRtpSink;
+	
 	
 	/// Pointer to audio RTCP sink element
 	GstElement* const m_pAudioRtcpSink;
 	
+	
 	/// Vector of destination addresses
 	std::vector<const std::string*> m_vDestinations;
+	
 	
 	/// Notify pointer
 	ISenderParameterNotifySink* const m_pNotifySink;
 	
+	
 	/// The video sprop parameter sets string
 	const char* m_pSpropParameterSets;
+	
 	
 	/// The video SSRC
 	unsigned int m_VideoSsrc;
 	
+	
 	/// The audio SSRC
 	unsigned int m_AudioSsrc;
+	
 	
 }; // END class SenderPipeline
 

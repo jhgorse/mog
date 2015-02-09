@@ -20,10 +20,14 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #include "VideoPanel.hpp"
 
-// For now, we hard-code this to a 16:9 aspect ratio, and a size that *should* fit in most cases.
-// The user can always resize the window.
+/// For now, we hard-code this to a 16:9 aspect ratio, and a size that *should* fit in most cases.
+/// The user can always resize the window.
 const wxSize VideoPanel::DEFAULT_MEDIA_PANEL_SIZE(128, 72);
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Constructor. Display a label with the participant's name, followed by the display panel.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 VideoPanel::VideoPanel(wxFrame* parent, const wxString &participantName)
 	: wxPanel(parent, wxID_ANY)
 	, m_MediaPanel(new wxPanel(this, wxID_ANY, wxDefaultPosition, DEFAULT_MEDIA_PANEL_SIZE))

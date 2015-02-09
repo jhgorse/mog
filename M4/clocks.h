@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 #ifdef __APPLE__
-
+// On Apple, clock_gettime is not defined. We define it here in terms of available functions.
 #include <sys/types.h>
 #include <sys/_types/_timespec.h>
 #include <mach/mach.h>
@@ -49,11 +49,13 @@ static inline int clock_gettime(clockid_t clk_id, struct timespec *tp)
 }
 
 #else
+// On non-Apple, we assume Posix clock functions are available via time.h.
 #include <time.h>
 #endif
 
 #ifdef __cplusplus
 
+// Comparison functions for struct timespec
 static inline bool operator< (const struct timespec& lhs, const struct timespec& rhs){return (lhs.tv_sec < rhs.tv_sec) || (lhs.tv_nsec < rhs.tv_nsec);}
 static inline bool operator> (const struct timespec& lhs, const struct timespec& rhs){return rhs < lhs;}
 static inline bool operator<=(const struct timespec& lhs, const struct timespec& rhs){return !(lhs > rhs);}

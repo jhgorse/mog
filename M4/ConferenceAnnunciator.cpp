@@ -27,12 +27,17 @@
 #include <unistd.h>
 
 #include <cassert>
-#include <cstdio>
 #include <cstring>
 
 #include "clocks.h"
 #include "ConferenceAnnunciator.hpp"
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Constructor.
+///
+/// After setting up instance variables, spawn the worker thread.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 ConferenceAnnunciator::ConferenceAnnunciator()
 	: m_UdpSocket(CreateSocket())
 	, m_WorkerThread()
@@ -52,8 +57,13 @@ ConferenceAnnunciator::ConferenceAnnunciator()
 	// Spawn the worker thread
 	assert(pthread_create(&m_WorkerThread, NULL, StaticWorkerFn, this) == 0);
 }
-	
-	
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Destructor.
+///
+/// Stops the worker thread and frees instance data.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 ConferenceAnnunciator::~ConferenceAnnunciator()
 {
 	pthread_cancel(m_WorkerThread);
@@ -83,6 +93,17 @@ ConferenceAnnunciator::~ConferenceAnnunciator()
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ConferenceAnnunciator::SendParameters
+///
+/// Configure the annunciator to send "my" participant parameters to all other participants.
+///
+/// @param pPictureParameters  The string of picture parameter data (e.g. sprop-parameter-sets)
+///
+/// @param videoSsrc  The SSRC of the video stream.
+///
+/// @param audioSsrc  The SSRC of the audio stream.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ConferenceAnnunciator::SendParameters(const char* pPictureParameters, unsigned int videoSsrc, unsigned int audioSsrc)
 {
 	// If we already have a parameter packet, free it.
@@ -94,6 +115,12 @@ void ConferenceAnnunciator::SendParameters(const char* pPictureParameters, unsig
 	}
 	
 	// Allocate and format a new parameter packet.
+	//
+	// Parameter packets are of the following form:
+	//  - Four characters "PARM" (not NULL-terminated)
+	//  - Picture parameters string, NULL-terminated
+	//  - Video SSRC in network byte order
+	//  - Audio SSRC in network byte order
 	size_t pictureParametersLength = std::strlen(pPictureParameters);
 	m_ParameterPacketLength = 4 + pictureParametersLength + 1 + sizeof(videoSsrc) + sizeof(audioSsrc);
 	char* pParameterPacket = new char[m_ParameterPacketLength];
@@ -106,13 +133,22 @@ void ConferenceAnnunciator::SendParameters(const char* pPictureParameters, unsig
 	pWorking += sizeof(videoSsrc);
 	*((unsigned int *)pWorking) = htonl(audioSsrc);
 	m_pParameterPacket = pParameterPacket;
-	
-	std::printf("Parameter packet of %u bytes allocated.\n", m_ParameterPacketLength);
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ConferenceAnnunciator::SendParticipantList
+///
+/// Configure the annunciator to send the list of participants to all other participants. This is
+/// to be used by call organizers.
+///
+/// @param participantAddresses  An array of NULL-terminated participant addresses.
+///
+/// @param numberOfParticipants  The number of participants in the list
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ConferenceAnnunciator::SendParticipantList(const char* participantAddresses[], size_t numberOfParticipants)
 {
+	// Call SetParticipantList to save this participant list for all packet recipients.
 	SetParticipantList(participantAddresses, numberOfParticipants);
 	
 	// If we already have a participant list packet, free it.
@@ -124,6 +160,10 @@ void ConferenceAnnunciator::SendParticipantList(const char* participantAddresses
 	}
 	
 	// Allocate and format a participant list packet
+	//
+	// Participant list packets are of the following form:
+	//  - Four characters "CALL" (not NULL-terminated)
+	//  - Array of NULL-terminated participant addresses
 	m_ParticipantListPacketLength = 4; // "CALL"
 	for (size_t i = 0; i < numberOfParticipants; ++i)
 	{
@@ -140,11 +180,18 @@ void ConferenceAnnunciator::SendParticipantList(const char* participantAddresses
 		pWorking += len + 1;
 	}
 	m_pParticipantListPacket = pParticipantListPacket;
-	
-	std::printf("Participant list packet of %u bytes allocated.\n", m_ParticipantListPacketLength);
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ConferenceAnnunciator::SetParticipantList
+///
+/// Configure the annunciator with the list of participants to which to send all relevant packets.
+///
+/// @param participantAddresses  An array of NULL-terminated participant addresses.
+///
+/// @param numberOfParticipants  The number of participants in the list
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ConferenceAnnunciator::SetParticipantList(const char* participantAddresses[], size_t numberOfParticipants)
 {
 	// If we already have a destination list, free it.
@@ -169,6 +216,12 @@ void ConferenceAnnunciator::SetParticipantList(const char* participantAddresses[
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ConferenceAnnunciator::CreateSocket
+///
+/// Create a socket to be used by this instance. To be called from the constructor's member
+/// initialization list.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 int ConferenceAnnunciator::CreateSocket()
 {
 	// Create the socket itself
@@ -193,12 +246,16 @@ int ConferenceAnnunciator::CreateSocket()
 }
 
 
-void* ConferenceAnnunciator::StaticWorkerFn(void* pArg)
-{
-	return reinterpret_cast<ConferenceAnnunciator*>(pArg)->WorkerFn();
-}
-
-
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ConferenceAnnunciator::HandleCallPacket
+///
+/// Called when a new call packet is received. If configured, this winds up calling the call packet
+/// listener.
+///
+/// @param packet  The call packet AFTER the initial "CALL" bytes.
+///
+/// @param packetSize  The size of the packet (not including the initial "CALL" bytes).
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ConferenceAnnunciator::HandleCallPacket(const char* packet, size_t packetSize)
 {
 	// Early return if no one's listening
@@ -236,6 +293,16 @@ void ConferenceAnnunciator::HandleCallPacket(const char* packet, size_t packetSi
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ConferenceAnnunciator::HandleParameterPacket
+///
+/// Called when a new parameter packet is received. If configured, this winds up calling the
+/// parameter packet listener.
+///
+/// @param packet  The call packet AFTER the initial "PARM" bytes.
+///
+/// @param packetSize  The size of the packet (not including the initial "PARM" bytes).
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ConferenceAnnunciator::HandleParameterPacket(const char* packet, size_t packetSize, struct sockaddr_in* pSenderAddress)
 {
 	// Early return if no one's listening
@@ -263,6 +330,12 @@ void ConferenceAnnunciator::HandleParameterPacket(const char* packet, size_t pac
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ConferenceAnnunciator::SendParticipantList
+///
+/// Called by the worker function to transmit the participant list (if configured) to all other
+/// participants.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ConferenceAnnunciator::SendParticipantList()
 {
 	// Early return in case we don't have a destination list or a participant list packet
@@ -271,7 +344,6 @@ void ConferenceAnnunciator::SendParticipantList()
 		return;
 	}
 	
-	std::printf("Sending participant list packet to %u destinations.\n", m_NumberOfDestinations);
 	for (size_t i = 0; i < m_NumberOfDestinations; ++i)
 	{
 		// Purposefully ignoring return value here, in case we would get back an EAGAIN or EWOULDBLOCK
@@ -281,6 +353,12 @@ void ConferenceAnnunciator::SendParticipantList()
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ConferenceAnnunciator::SendParameters
+///
+/// Called by the worker function to transmit the parameters (if configured) to all other
+/// participants.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void ConferenceAnnunciator::SendParameters()
 {
 	// Early return in case we don't have a destination list or a parameter packet
@@ -289,7 +367,6 @@ void ConferenceAnnunciator::SendParameters()
 		return;
 	}
 	
-	std::printf("Sending parameter packet to %u destinations.\n", m_NumberOfDestinations);
 	for (size_t i = 0; i < m_NumberOfDestinations; ++i)
 	{
 		// Purposefully ignoring return value here, in case we would get back an EAGAIN or EWOULDBLOCK
@@ -299,7 +376,9 @@ void ConferenceAnnunciator::SendParameters()
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Returns the difference in struct timespecs IN MICROSECONDS.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 static inline unsigned long operator-(const struct timespec& lhs, const struct timespec& rhs)
 {
 	static const int64_t US_PER_S = static_cast<int64_t>(1000000);
@@ -313,7 +392,9 @@ static inline unsigned long operator-(const struct timespec& lhs, const struct t
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Adds a specified number of MICROSECONDS to a struct timespec.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 static inline struct timespec& operator+=(struct timespec& lhs, long addedUs)
 {
 	static const int64_t US_PER_S = static_cast<int64_t>(1000000);
@@ -338,18 +419,20 @@ static inline struct timespec& operator+=(struct timespec& lhs, long addedUs)
 }
 
 
-/// The (instance) worker function
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ConferenceAnnunciator::WorkerFn()
+///
+/// The (instance) worker function. Every TRANSMIT_INTERVAL_US microseconds, send participant list
+/// and parameter packets (if configured) to all participants (if configured). In addition, wait
+/// to receive any participant list and/or parameter packets and pass them along to any listeners
+/// (if configured).
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void* ConferenceAnnunciator::WorkerFn()
 {
 	struct timespec now;
 	struct timeval timeout;
 	fd_set set;
 	
-	// This task that will periodically wake up to do things like:
-	//  - send the participant list (if configured to do so),
-	//  - send the sender picture parameters and SSRCs,
-	//  - receive the participant list (if configured to do so),
-	//  - receive the other participants' picture parameters and SSRCs
 	while (true)
 	{
 		// Figure out how long to wait 
@@ -362,6 +445,7 @@ void* ConferenceAnnunciator::WorkerFn()
 		}
 		else
 		{
+			// Do math to wake up at (approximately) m_NextXmitTime.
 			unsigned long delayUs = m_NextXmitTime - now;
 			timeout.tv_sec = delayUs / 1000000;
 			timeout.tv_usec = delayUs % 1000000;
@@ -370,10 +454,10 @@ void* ConferenceAnnunciator::WorkerFn()
 		// Use select to wait for the UDP socket to be readable
 		FD_ZERO(&set);
 		FD_SET(m_UdpSocket, &set);
-//		std::printf("select(%d, %d)\n", timeout.tv_sec, timeout.tv_usec);
 		int r = select(m_UdpSocket + 1, &set, NULL, NULL, &timeout);
 		assert(r >= 0);
 		
+		// If r > 0 then the socket is readable.
 		if (r > 0)
 		{
 			char buffer[1500];
@@ -386,7 +470,7 @@ void* ConferenceAnnunciator::WorkerFn()
 				ssize_t read = recvfrom(m_UdpSocket, buffer, sizeof(buffer), 0, reinterpret_cast<struct sockaddr *>(&addr), &addrSize);
 				if ((read == 0) || ((read < 0) && ((errno == EAGAIN) || (errno == EWOULDBLOCK))))
 				{
-					// Nothing to read
+					// Nothing to read, so break out of this inner while loop.
 					break;
 				}
 				assert(read > 0);
@@ -401,6 +485,7 @@ void* ConferenceAnnunciator::WorkerFn()
 			}
 		}
 		
+		// If we have a destination list,
 		if (m_pDestinationAddresses != NULL)
 		{
 			// See if it's time to transmit.

@@ -23,20 +23,36 @@
 
 #include <wx/wx.h>
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// This is the world's simplest dialog box, asking the user if they want to start or join a call.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 class StartJoinDialog : public wxDialog
 {
 public:
+	/// Event IDs.
 	enum
 	{
 		ID_START = wxID_HIGHEST + 1,
 		ID_JOIN,
 	};
 	
+	
+	/// Constructor.
 	StartJoinDialog(const wxString& title);
 	
+	
+	/// Called when "Start" is clicked.
 	void OnStart(wxCommandEvent &event);
+	
+	
+	/// Called when "Join" is clicked.
 	void OnJoin(wxCommandEvent &event);
+	
+	
+	/// Called when "Cancel" is clicked.
 	void OnCancel(wxCommandEvent &event);
+	
 	
 protected:
 	DECLARE_EVENT_TABLE()

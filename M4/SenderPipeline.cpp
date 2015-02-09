@@ -127,6 +127,13 @@ void SenderPipeline::SetBitrate(size_t bitrate)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// SenderPipeline::SetWindowSink()
+///
+/// Set the display window sink by native window handle.
+///
+/// @param handle  The native display window handle.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void SenderPipeline::SetWindowSink(void* handle)
 {
 	GstElement* videosink = gst_bin_get_by_name(GST_BIN(Pipeline()), "videosink");
@@ -135,6 +142,17 @@ void SenderPipeline::SetWindowSink(void* handle)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// SenderPipeline::BuildPipeline()
+///
+/// Build the pipeline. Used from the constructor's member initialization list.
+///
+/// @param videoInputName  The name of the selected video input device.
+///
+/// @param audioInputName  The name of the selected audio input device.
+///
+/// @return  The pipeline.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char* audioInputName)
 {
 	// Create a new pipeline
@@ -193,6 +211,9 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 	gst_util_set_object_arg(G_OBJECT(venc), "tune", "zerolatency");
 	
 	GstElement* rtph264pay = gst_element_factory_make("rtph264pay", NULL);
+	g_object_set(G_OBJECT(rtph264pay),
+		"mtu", 8900,
+		NULL);
 	
 	GstElement* vsink = gst_element_factory_make("multiudpsink", "vsink");
 	g_object_set(G_OBJECT(vsink),
@@ -241,6 +262,7 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 	GstElement* rtpL16pay = gst_element_factory_make("rtpL16pay", NULL);
     g_object_set(rtpL16pay,
     	"buffer-list", TRUE,
+		"mtu",         8900,
     	NULL);
     
 	GstElement* asink = gst_element_factory_make("multiudpsink", "asink");

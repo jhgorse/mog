@@ -21,11 +21,17 @@
 #ifndef __APPLEAVLISTENUMERATOR_HPP__
 #define __APPLEAVLISTENUMERATOR_HPP__
 
-#include "AVList.hpp"
+#include "AVList.hpp" // for AVListEnumerator
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// This class provides an implementation of AVListEnumerator that enumerates A/V input devices on
+/// apple (OS X).
+///////////////////////////////////////////////////////////////////////////////////////////////////
 class AppleAVListEnumerator : public AVListEnumerator
 {
 protected:
+
+	/// Enumerate all A/V input devices.
 	virtual void Enumerate();
 };
 

@@ -18,16 +18,25 @@
 /// @brief This file declares the InputsDialog class, which is a dialog for allowing the user to
 /// choose video and audio inputs.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include "AVList.hpp"
 #include "InputsDialog.hpp"
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// Constructor.
+///
+/// Present the user with a choice of A/V input devices obtained from the AVListEnumerator.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 InputsDialog::InputsDialog(const wxString & title)
 	: wxDialog(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(250, 160))
 	, m_OkButton(NULL)
 	, m_VideoChoice(NULL)
 {
+	// Iterate available devices.
 	const AVList& rAVList = AVListEnumerator::List();
 	
+	// Build the GUI.
 	wxPanel *panel = new wxPanel(this);
 	new wxStaticBox(panel, wxID_ANY, wxT("Choose video and audio inputs:"), wxPoint(5, 5), wxSize(240, 86));
 	new wxStaticText(panel, wxID_ANY, wxT("Video:"), wxPoint(15, 30), wxDefaultSize, wxALIGN_LEFT);
@@ -61,16 +70,34 @@ InputsDialog::InputsDialog(const wxString & title)
 	SetSizer(vbox);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InputsDialog::OnOk
+///
+/// Close the dialog box in a successful way.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void InputsDialog::OnOk(wxCommandEvent &event)
 {
 	EndModal(wxID_OK);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InputsDialog::OnCancel
+///
+/// Close the dialog box in an unsuccessful way.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void InputsDialog::OnCancel(wxCommandEvent &event)
 {
 	EndModal(wxID_CANCEL);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InputsDialog::OnAVChoose
+///
+/// Called when the A/V choices change; allows us to conditionally make the Ok button clickable.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void InputsDialog::OnAVChoose(wxCommandEvent &event)
 {
 	m_OkButton->Enable(
@@ -79,6 +106,12 @@ void InputsDialog::OnAVChoose(wxCommandEvent &event)
 	);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InputsDialog::SelectedVideoInput
+///
+/// Returns a string of the selected video input, or an empty string if none is chosen.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 std::string InputsDialog::SelectedVideoInput() const
 {
 	int idx;
@@ -92,6 +125,12 @@ std::string InputsDialog::SelectedVideoInput() const
 	}
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// InputsDialog::SelectedAudioInput
+///
+/// Returns a string of the selected audio input, or an empty string if none is chosen.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 std::string InputsDialog::SelectedAudioInput() const
 {
 	int idx;
@@ -105,6 +144,10 @@ std::string InputsDialog::SelectedAudioInput() const
 	}
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// The event table.
+///////////////////////////////////////////////////////////////////////////////////////////////////
 BEGIN_EVENT_TABLE(InputsDialog, wxDialog)
 	EVT_BUTTON(wxID_OK,         InputsDialog::OnOk)
 	EVT_BUTTON(wxID_CANCEL,     InputsDialog::OnCancel)
