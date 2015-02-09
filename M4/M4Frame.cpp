@@ -49,6 +49,8 @@ M4Frame::M4Frame()
 	, m_pSenderPipeline(NULL)
 	, m_pReceiverPipeline(NULL)
 {
+	std::memset(m_VideoPanels, 0, sizeof(m_VideoPanels));
+	
 	// First, show a dialog to choose video & audio inputs
 	InputsDialog* inputs = new InputsDialog(wxT("Choose Inputs"));
 	inputs->Centre();
@@ -177,7 +179,28 @@ M4Frame::M4Frame()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 M4Frame::~M4Frame()
 {
-	// TODO: Deallocate stuff
+	// Deallocate stuff
+	for (size_t i = 0; i < (sizeof(m_VideoPanels) / sizeof(m_VideoPanels[0])); ++i)
+	{
+		delete m_VideoPanels[i];
+	}
+
+	for (std::unordered_map<unsigned int, Participant*>::iterator it = m_ParticipantByVideoSsrc.begin(); it != m_ParticipantByVideoSsrc.end(); ++it)
+	{
+		delete it->second;
+	}
+
+	if (m_pSenderPipeline != NULL)
+	{
+		delete m_pSenderPipeline;
+		m_pSenderPipeline = NULL;
+	}
+	
+	if (m_pReceiverPipeline != NULL)
+	{
+		delete m_pReceiverPipeline;
+		m_pReceiverPipeline = NULL;
+	}
 }
 
 
@@ -307,15 +330,24 @@ void M4Frame::OnSsrcActivate(ReceiverPipeline& rPipeline, SsrcType type, unsigne
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void M4Frame::OnSsrcDeactivate(ReceiverPipeline& rPipeline, SsrcType type, unsigned int ssrc, SsrcDeactivateReason reason)
 {
+	Participant* p = NULL;
 	if (type == ReceiverPipeline::IReceiverNotifySink::SSRC_TYPE_VIDEO)
 	{
-		rPipeline.DeactivateVideoSsrc(ssrc);
-		m_ParticipantByVideoSsrc.erase(ssrc);
+		p = m_ParticipantByVideoSsrc[ssrc];
 	}
 	else
 	{
-		rPipeline.DeactivateAudioSsrc(ssrc);
-		m_ParticipantByAudioSsrc.erase(ssrc);
+		p = m_ParticipantByAudioSsrc[ssrc];
+	}
+	if (p != NULL)
+	{
+		rPipeline.DeactivateVideoSsrc(p->videoSsrc);
+		rPipeline.DeactivateAudioSsrc(p->audioSsrc);
+		
+		m_ParticipantByVideoSsrc.erase(p->videoSsrc);
+		m_ParticipantByAudioSsrc.erase(p->audioSsrc);
+		
+		delete p;
 	}
 }
 
