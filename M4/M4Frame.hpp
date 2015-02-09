@@ -74,6 +74,10 @@ protected:
 	
 	
 private:
+	/// Name of directory file
+	static const char DIRECTORY_FILENAME[];
+	
+	
 	/// Load the directory of available participants.
 	void LoadDirectory();
 	

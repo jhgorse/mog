@@ -19,12 +19,19 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <gst/gst.h>
+#include <fstream>
+
+#include "rapidjson/document.h"
+
 #include "M4Frame.hpp"
 #include "InputsDialog.hpp"
 #include "InviteParticipantsDialog.hpp"
 #include "StartJoinDialog.hpp"
 #include "VideoPanel.hpp"
 #include "WaitForInvitationDialog.hpp"
+
+
+const char M4Frame::DIRECTORY_FILENAME[] = "directory.json";
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -413,13 +420,31 @@ void M4Frame::OnParameterPacket(const char* address, const char* pictureParamete
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void M4Frame::LoadDirectory()
 {
-	// TODO: Get these hard-coded values out of here
-	m_Directory.push_back(DirectoryEntry("James",   "192.168.2.2"));
-	m_Directory.push_back(DirectoryEntry("Jessica", "192.168.2.3"));
-//	m_Directory.push_back(DirectoryEntry("Jimmy",   "192.168.117.134"));
-//	m_Directory.push_back(DirectoryEntry("Jocelyn", "192.168.117.135"));
-	m_Directory.push_back(DirectoryEntry("Justin",  "192.168.2.1"));
-	m_MyAddress = "192.168.2.1";
+	// Read the directory file into memory
+	std::ifstream s;
+	size_t length;
+	s.open(DIRECTORY_FILENAME);
+	s.seekg(0, std::ios::end);
+	length = s.tellg();
+	s.seekg(0, std::ios::beg);
+	char* buffer = new char[length];
+	s.read(buffer, length);
+	s.close();
+
+	// Parse the JSON data in the directory
+	rapidjson::Document d;
+	d.Parse(buffer);
+	
+	// Set my address
+	m_MyAddress = std::string(d["me"].GetString());
+	
+	// Add participants from list
+	for (size_t i = 0; i < d["participants"].Size(); ++i)
+	{
+		m_Directory.push_back(DirectoryEntry(std::string(d["participants"][i]["name"].GetString()), std::string(d["participants"][i]["address"].GetString())));
+	}
+	
+	delete[] buffer;
 }
 
 
