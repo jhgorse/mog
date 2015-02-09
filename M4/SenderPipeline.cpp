@@ -194,14 +194,14 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 	
 	GstElement* rtph264pay = gst_element_factory_make("rtph264pay", NULL);
 	
-	GstElement* vsink = gst_element_factory_make("udpsink", "vsink");
+	GstElement* vsink = gst_element_factory_make("multiudpsink", "vsink");
 	g_object_set(G_OBJECT(vsink),
 		"enable-last-sample", FALSE,
 		"sync",               FALSE,
 		"async",              FALSE,
 		NULL);
 	
-	GstElement* vcsink = gst_element_factory_make("udpsink", "vcsink");
+	GstElement* vcsink = gst_element_factory_make("multiudpsink", "vcsink");
 	g_object_set(G_OBJECT(vcsink),
 		"enable-last-sample", FALSE,
 		"sync",               FALSE,
@@ -243,14 +243,14 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
     	"buffer-list", TRUE,
     	NULL);
     
-	GstElement* asink = gst_element_factory_make("udpsink", "asink");
+	GstElement* asink = gst_element_factory_make("multiudpsink", "asink");
 	g_object_set(G_OBJECT(asink),
 		"enable-last-sample", FALSE,
 		"sync",               FALSE,
 		"async",              FALSE,
 		NULL);
 	
-	GstElement* acsink = gst_element_factory_make("udpsink", "acsink");
+	GstElement* acsink = gst_element_factory_make("multiudpsink", "acsink");
 	g_object_set(G_OBJECT(acsink),
 		"enable-last-sample", FALSE,
 		"sync",               FALSE,
