@@ -102,9 +102,9 @@ void ConferenceAnnunciator::SendParameters(const char* pPictureParameters, unsig
 	std::strcpy(pWorking, pPictureParameters);
 	pWorking[pictureParametersLength] = '\0';
 	pWorking += pictureParametersLength + 1;
-	*((unsigned int *)pWorking) = videoSsrc;
+	*((unsigned int *)pWorking) = htonl(videoSsrc);
 	pWorking += sizeof(videoSsrc);
-	*((unsigned int *)pWorking) = audioSsrc;
+	*((unsigned int *)pWorking) = htonl(audioSsrc);
 	m_pParameterPacket = pParameterPacket;
 	
 	std::printf("Parameter packet of %u bytes allocated.\n", m_ParameterPacketLength);
