@@ -4,6 +4,7 @@ CPP=g++
 WX_BASE=/Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2
 
 INCLUDES= \
+	-I./include \
 	-I/Library/Frameworks/GStreamer.framework/Versions/1.0/Headers/ \
 	-I$(WX_BASE)/build-cocoa-debug/lib/wx/include/osx_cocoa-unicode-static-3.0 \
 	-I$(WX_BASE)/include
