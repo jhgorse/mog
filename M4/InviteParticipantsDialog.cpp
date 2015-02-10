@@ -28,13 +28,13 @@
 /// Constructor. Just builds the GUI.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 InviteParticipantsDialog::InviteParticipantsDialog(const wxString & title)
-	: wxDialog(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(400, 600))
+	: wxDialog(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(400, 300))
 	, m_ParticipantListBox(NULL)
 	, m_OkButton(NULL)
 {
 	wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
 	
-	m_ParticipantListBox = new wxListBox(this, wxID_ANY, wxDefaultPosition, wxSize(390, 550), 0, NULL, wxLB_MULTIPLE | wxLB_SORT);
+	m_ParticipantListBox = new wxListBox(this, wxID_ANY, wxDefaultPosition, wxSize(390, 250), 0, NULL, wxLB_MULTIPLE | wxLB_SORT);
 	vbox->Add(m_ParticipantListBox, 1, wxALIGN_CENTER | wxTOP | wxBOTTOM);
 	
 	wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
