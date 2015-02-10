@@ -41,7 +41,7 @@ const char M4Frame::DIRECTORY_FILENAME[] = "directory.json";
 /// main frame.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 M4Frame::M4Frame()
-	: wxFrame(NULL, wxID_ANY, wxT("Video Conferencing System"), wxDefaultPosition, wxSize(400, 150))
+	: wxFrame(NULL, wxID_ANY, wxT("Video Conferencing System"), wxDefaultPosition, wxSize(400, 600))
 	, m_Directory()
 	, m_MyAddress("")
 	, m_ParticipantByVideoSsrc()
@@ -427,9 +427,10 @@ void M4Frame::LoadDirectory()
 	s.seekg(0, std::ios::end);
 	length = s.tellg();
 	s.seekg(0, std::ios::beg);
-	char* buffer = new char[length];
+	char* buffer = new char[length + 1];
 	s.read(buffer, length);
 	s.close();
+	buffer[length] = '\0';
 
 	// Parse the JSON data in the directory
 	rapidjson::Document d;
