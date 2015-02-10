@@ -32,8 +32,10 @@ VideoPanel::VideoPanel(wxFrame* parent, const wxString &participantName)
 	: wxPanel(parent, wxID_ANY)
 	, m_MediaPanel(new wxPanel(this, wxID_ANY, wxDefaultPosition, DEFAULT_MEDIA_PANEL_SIZE))
 {
-	wxBoxSizer* s = new wxBoxSizer(wxVERTICAL);
+	m_MediaPanel->SetForegroundColour("white");
+	m_MediaPanel->SetBackgroundColour("black");
 	
+	wxBoxSizer* s = new wxBoxSizer(wxVERTICAL);
 	wxString label = participantName.Clone();
 	label << ":";
 	wxStaticText* text = new wxStaticText(this, wxID_ANY, label, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE_HORIZONTAL);
