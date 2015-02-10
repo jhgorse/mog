@@ -1,3 +1,0 @@
-Miscellaneous notes
-
-I don't think the latency of the avfvideosrc matters, as long as all the sinks in the sender pipeline have sync=false, so they will not sync on the clock before sending.
