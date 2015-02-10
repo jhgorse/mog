@@ -33,6 +33,8 @@
 
 const char M4Frame::DIRECTORY_FILENAME[] = "directory.json";
 
+const size_t M4Frame::VIDEO_BITRATE = 1000000;
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// M4Frame::M4Frame
@@ -226,7 +228,7 @@ void M4Frame::OnIdle(wxIdleEvent& evt)
 
 	// Create a new sender pipeline with the chosen video and audio inputs and make it play.
 	m_pSenderPipeline = new SenderPipeline(videoInputName.c_str(), audioInputName.c_str(), this);
-	m_pSenderPipeline->SetBitrate(1000000);
+	m_pSenderPipeline->SetBitrate(VIDEO_BITRATE);
 	m_pSenderPipeline->SetWindowSink(m_VideoPanels[0]->GetMediaPanelHandle());
 	for (size_t i = 0; i < std::min(m_ParticipantList.GetCount(), (size_t)5); ++i)
 	{

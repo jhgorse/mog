@@ -78,6 +78,10 @@ private:
 	static const char DIRECTORY_FILENAME[];
 	
 	
+	/// Video bitrate
+	static const size_t VIDEO_BITRATE;
+	
+	
 	/// Load the directory of available participants.
 	void LoadDirectory();
 	
