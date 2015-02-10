@@ -1,7 +1,7 @@
 CC=gcc
 CPP=g++
 
-WX_BASE=/Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2
+WX_BASE=./wxWidgets-3.0.2
 
 INCLUDES= \
 	-I./include \

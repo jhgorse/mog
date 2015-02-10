@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>E86F2CD0-212C-4C6F-BFE7-60DCC0CCE7C1</string>
+	<key>IDESourceControlProjectName</key>
+	<string>minimal_cocoa</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>DDD0C8A1123A60CC7F8DA81FECF3B068A50CC8CF</key>
+		<string>github.com:jxc761/SelfStudy.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>OneCommunity/libs/wxWidgets-3.0.2/samples/minimal/minimal_cocoa.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>DDD0C8A1123A60CC7F8DA81FECF3B068A50CC8CF</key>
+		<string>../../../../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>github.com:jxc761/SelfStudy.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>DDD0C8A1123A60CC7F8DA81FECF3B068A50CC8CF</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>DDD0C8A1123A60CC7F8DA81FECF3B068A50CC8CF</string>
+			<key>IDESourceControlWCCName</key>
+			<string>JingSelfStudy</string>
+		</dict>
+	</array>
+</dict>
+</plist>
