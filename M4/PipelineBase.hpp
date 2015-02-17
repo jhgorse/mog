@@ -24,7 +24,10 @@
 
 #include <gst/gst.h>          // for GStreamer stuff
 #include <cassert>            // for assert
-#include "PipelineTracer.hpp" // for PipelineTracer
+
+// The Pipeline tracer is currently commented out to keep the console output quiet. Uncomment to
+// re-include it.
+//#include "PipelineTracer.hpp" // for PipelineTracer
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,7 +39,7 @@ public:
 	/// Constructor
 	inline explicit PipelineBase(GstElement* pPipeline)
 		: m_pPipeline(pPipeline)
-		, m_Tracer(m_pPipeline)
+//		, m_Tracer(m_pPipeline)
 	{
 		assert(m_pPipeline != NULL);
 	}
@@ -81,7 +84,7 @@ private:
 	GstElement* const m_pPipeline;
 	
 	/// Pipeline tracer
-	PipelineTracer m_Tracer;
+//	PipelineTracer m_Tracer;
 }; // END class PipelineBase
 
 #endif // __PIPELINE_BASE_HPP__
