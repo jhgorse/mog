@@ -33,7 +33,7 @@
 
 const char M4Frame::DIRECTORY_FILENAME[] = "directory.json";
 
-const size_t M4Frame::VIDEO_BITRATE = 1000000;
+const size_t M4Frame::VIDEO_BITRATE = 10000000;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
