@@ -59,6 +59,10 @@ public:
 	/// Pipeline accessor
 	GstElement* Pipeline() const { return m_pPipeline; }
 	
+
+	/// Make the pipeline go to NULL
+	void Nullify();
+
 	
 	/// Make the pipeline play
 	void Play();
