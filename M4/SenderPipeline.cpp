@@ -209,6 +209,7 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 	GstElement* venc = gst_element_factory_make("x264enc", "venc");
 	gst_util_set_object_arg(G_OBJECT(venc), "speed-preset", "ultrafast");
 	gst_util_set_object_arg(G_OBJECT(venc), "tune", "zerolatency");
+	g_object_set(G_OBJECT(venc), "key-int-max", 10, NULL);
 	
 	GstElement* rtph264pay = gst_element_factory_make("rtph264pay", NULL);
 	g_object_set(G_OBJECT(rtph264pay),
