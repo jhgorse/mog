@@ -69,6 +69,8 @@ SenderPipeline::SenderPipeline(const char* videoInputName, const char* audioInpu
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 SenderPipeline::~SenderPipeline()
 {
+	Nullify();
+	
 	// Unref everything we ref'ed before
 	gst_object_unref(m_pAudioRtcpSink);
 	gst_object_unref(m_pAudioRtpSink);

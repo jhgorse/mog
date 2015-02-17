@@ -75,6 +75,7 @@ ReceiverPipeline::ReceiverPipeline(IReceiverNotifySink* pNotifySink)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ReceiverPipeline::~ReceiverPipeline()
 {
+	Nullify();
 	gst_object_unref(m_pRtpBin);
 }
 
@@ -110,7 +111,7 @@ void ReceiverPipeline::ActivateVideoSsrc(unsigned int ssrc, const char* pictureP
 	    	"caps", caps,
 	    	NULL);
 	    gst_caps_unref(caps);
-    
+		
 		GstElement* depay = gst_element_factory_make("rtph264depay", NULL);
 		assert(depay != NULL);
 		
@@ -140,7 +141,11 @@ void ReceiverPipeline::ActivateVideoSsrc(unsigned int ssrc, const char* pictureP
 		assert(sink != NULL);
 		GstPad *peer = gst_pad_get_peer(ssrcPad);
 		gst_pad_unlink(ssrcPad, peer);
+		GstElement* peerElement = GST_ELEMENT(gst_pad_get_parent(peer));
+		assert(peerElement != NULL);
 		gst_object_unref(peer);
+		RemoveAndUnlinkDownstream(peerElement);
+		gst_object_unref(peerElement);
 		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
 		gst_object_unref(sink);
 		
@@ -192,7 +197,11 @@ void ReceiverPipeline::ActivateAudioSsrc(unsigned int ssrc)
 		assert(sink != NULL);
 		GstPad *peer = gst_pad_get_peer(ssrcPad);
 		gst_pad_unlink(ssrcPad, peer);
+		GstElement* peerElement = GST_ELEMENT(gst_pad_get_parent(peer));
+		assert(peerElement != NULL);
 		gst_object_unref(peer);
+		RemoveAndUnlinkDownstream(peerElement);
+		gst_object_unref(peerElement);
 		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
 		gst_object_unref(sink);
 		
@@ -227,7 +236,11 @@ void ReceiverPipeline::DeactivateVideoSsrc(unsigned int ssrc)
 		assert(sink != NULL);
 		GstPad *peer = gst_pad_get_peer(ssrcPad);
 		gst_pad_unlink(ssrcPad, peer);
+		GstElement* peerElement = GST_ELEMENT(gst_pad_get_parent(peer));
+		assert(peerElement != NULL);
 		gst_object_unref(peer);
+		RemoveAndUnlinkDownstream(peerElement);
+		gst_object_unref(peerElement);
 		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
 		gst_object_unref(sink);
 		
@@ -260,7 +273,11 @@ void ReceiverPipeline::DeactivateAudioSsrc(unsigned int ssrc)
 		assert(sink != NULL);
 		GstPad *peer = gst_pad_get_peer(ssrcPad);
 		gst_pad_unlink(ssrcPad, peer);
+		GstElement* peerElement = GST_ELEMENT(gst_pad_get_parent(peer));
+		assert(peerElement != NULL);
 		gst_object_unref(peer);
+		RemoveAndUnlinkDownstream(peerElement);
+		gst_object_unref(peerElement);
 		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
 		gst_object_unref(sink);
 		
@@ -361,16 +378,12 @@ void ReceiverPipeline::OnRtpBinPadAdded(GstElement* element, GstPad* pad)
 		gst_object_unref(sink);
 		
 		gst_element_sync_state_with_parent(fakesink);
-		
-		const gchar* pad_name = gst_pad_get_name(pad);
-		g_message("Pad \"%s\" added to rtpbin.", pad_name);
-		g_free(const_cast<gchar*>(pad_name));
 	}
 	else
 	{
 		const gchar* pad_name = gst_pad_get_name(pad);
 		const gchar* caps_string = gst_caps_to_string(pad_caps);
-		g_message("Pad \"%s\" with caps \"%s\" added to rtpbin! Not a known media type!", pad_name, caps_string);
+		g_message("%s: Pad \"%s\" with caps \"%s\" added to rtpbin! Not a known media type!", __func__, pad_name, caps_string);
 		g_free(const_cast<gchar*>(caps_string));
 		g_free(const_cast<gchar*>(pad_name));
 	}
@@ -410,4 +423,46 @@ void ReceiverPipeline::OnRtpBinSsrcDeactivate(ReceiverPipeline::IReceiverNotifyS
 		m_ActiveSsrcs.erase(it);
 		m_pNotifySink->OnSsrcDeactivate(*this, type, ssrc, reason);
 	}
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ReceiverPipeline::RemoveAndUnlinkDownstream
+///
+/// Remove and unlink everything downstream from this element .
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void ReceiverPipeline::RemoveAndUnlinkDownstream(GstElement* element)
+{
+	// Iterate through all the src pads on element
+	GstIterator *iter = gst_element_iterate_src_pads(element);
+	GValue vPad = G_VALUE_INIT;
+	while (gst_iterator_next(iter, &vPad) == GST_ITERATOR_OK)
+	{
+		GstPad* pad = GST_PAD(g_value_get_object(&vPad));
+		assert(pad != NULL);
+		
+		// Get the peer pad of this src
+		GstPad* peerPad = gst_pad_get_peer(pad);
+		if (peerPad != NULL)
+		{
+			// Unlink the two pads
+			assert(gst_pad_unlink(pad, peerPad));
+			
+			// Get the peer's parent element
+			GstElement* peerElement = GST_ELEMENT(gst_pad_get_parent(peerPad));
+			assert(peerElement != NULL);
+			
+			// We're done with the pad ref now
+			gst_object_unref(peerPad);
+			
+			// Call RemoveAndUnlinkDownstream recursively with peer element
+			RemoveAndUnlinkDownstream(peerElement);
+			
+			// Unref peer element
+			gst_object_unref(peerElement);
+		}
+	}
+	gst_iterator_free(iter);
+	
+	// Remove element from bin
+	assert(gst_bin_remove(GST_BIN(Pipeline()), element));
 }

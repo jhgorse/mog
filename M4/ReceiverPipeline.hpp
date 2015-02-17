@@ -128,6 +128,9 @@ private:
 	/// (Instance) callback for when an SSRC becomes inactive
 	void OnRtpBinSsrcDeactivate(IReceiverNotifySink::SsrcType type, unsigned int ssrc, IReceiverNotifySink::SsrcDeactivateReason reason);
 	
+	/// Remove and unlink everything downstream from this element.
+	void RemoveAndUnlinkDownstream(GstElement* element);
+	
 	
 	/// Notify pointer
 	IReceiverNotifySink* const m_pNotifySink;
