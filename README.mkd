@@ -7,34 +7,3 @@ This repository is the set of assets created for OneCommunity by BoxCast, Inc. (
 
 This depends on having the GStreamer for Mac OS X installed (see
 [GStreamer website](http://gstreamer.freedesktop.org/)) in the default location.
-
-### TODO
-
-	* Milestone 0: DONE
-	
-	* Milestone 1: DONE
-	
-	* Milestone 2: everything.
-	
-	* Milestone 3: everything.
-	
-	* Milestone 4: almost everything (already building a basic C++ app).
-	
-	* Milestone 5: almost everything (already created a git repo).
-		
-	* Miscellaneous:
-	
-		* How to choose video input, framerate, image size, etc.?
-		
-		* How to choose audio input?
-		
-		* What is the actual latency of osxvideosink? Render times are small, but there seems
-		  to be delay between render and actual display.
-		
-		* Out-of-band negotiation of caps/PPS/SPS/etc.?
-		
-		* Simultaneous capture, display of capture, encode, and decode (i.e. bidirectional
-		  stream) is taking ~75% of the CPU in step 1. Probably need to figure out a way to
-		  relieve the CPU for N-way streaming.
-		
-		* Probably use multicast for N-way streaming, but not sure of suitability over Internet2.
