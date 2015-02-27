@@ -26,6 +26,7 @@
 #include "M4Frame.hpp"
 #include "InputsDialog.hpp"
 #include "InviteParticipantsDialog.hpp"
+#include "ReceiverPipeline.hpp"
 #include "StartJoinDialog.hpp"
 #include "VideoPanel.hpp"
 #include "WaitForInvitationDialog.hpp"
@@ -33,7 +34,7 @@
 
 const char M4Frame::DIRECTORY_FILENAME[] = "directory.json";
 
-const size_t M4Frame::VIDEO_BITRATE = 10000000;
+const size_t M4Frame::VIDEO_BITRATE = 100000000;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -46,17 +47,13 @@ M4Frame::M4Frame()
 	: wxFrame(NULL, wxID_ANY, wxT("Video Conferencing System"), wxDefaultPosition, wxSize(400, 600))
 	, m_Directory()
 	, m_MyAddress("")
-	, m_ParticipantByVideoSsrc()
-	, m_ParticipantByAudioSsrc()
-	, m_OrphanedVideoSsrcs()
-	, m_OrphanedAudioSsrcs()
+	, m_ReceiverPipelinesByVideoSsrc()
 	, videoInputName()
 	, audioInputName()
 	, m_ParticipantList()
 	, m_Annunciator()
 	, m_VideoPanels()
 	, m_pSenderPipeline(NULL)
-	, m_pReceiverPipeline(NULL)
 {
 	std::memset(m_VideoPanels, 0, sizeof(m_VideoPanels));
 	
@@ -106,14 +103,14 @@ M4Frame::M4Frame()
 		}
 		m_ParticipantList = inviteParticipants->GetParticipantList();
 		inviteParticipants->Destroy();
+		m_ParticipantList.Add(GetNameForAddress(m_MyAddress)->c_str());
 		
 		// Configure the annunciator to send the participant list, which acts as an invitation
-		const char** participantAddresses = new const char*[m_ParticipantList.GetCount() + 1];
+		const char** participantAddresses = new const char*[m_ParticipantList.GetCount()];
 		for (size_t i = 0; i < m_ParticipantList.GetCount(); ++i)
 		{
 			participantAddresses[i] = GetAddressForParticipant(m_ParticipantList[i].c_str());
 		}
-		participantAddresses[m_ParticipantList.GetCount()] = m_MyAddress.c_str();
 		m_Annunciator.SendParticipantList(participantAddresses, m_ParticipantList.GetCount() + 1);
 		delete[] participantAddresses;
 	}
@@ -133,13 +130,10 @@ M4Frame::M4Frame()
 		m_ParticipantList.Clear();
 		for (size_t i = 0; i < addressList.GetCount(); ++i)
 		{
-			if (strcmp(addressList[i].c_str(), m_MyAddress.c_str()) != 0)
+			const std::string* name = GetNameForAddress(std::string(addressList[i].c_str()));
+			if (name != NULL)
 			{
-				const std::string* name = GetNameForAddress(std::string(addressList[i].c_str()));
-				if (name != NULL)
-				{
-					m_ParticipantList.Add(*name);
-				}
+				m_ParticipantList.Add(*name);
 			}
 		}
 		
@@ -152,9 +146,6 @@ M4Frame::M4Frame()
 		m_Annunciator.SetParticipantList(participantAddresses, m_ParticipantList.GetCount());
 		delete[] participantAddresses;
 	}
-	
-	// Connect ourselves as the parameter listener
-	m_Annunciator.SetParameterPacketListener(this);
 
 	wxBoxSizer* v = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* h1 = new wxBoxSizer(wxHORIZONTAL);
@@ -163,10 +154,15 @@ M4Frame::M4Frame()
 	m_VideoPanels[0] = new VideoPanel(this, "Me");
 	h1->Add(m_VideoPanels[0], 1, wxALL | wxEXPAND, 5);
 	
-	for (size_t i = 0; i < std::min(m_ParticipantList.GetCount(), (size_t)5); ++i)
+	const std::string* myName = GetNameForAddress(m_MyAddress);
+	for (size_t i = 1, j=0; j < std::min(m_ParticipantList.GetCount(), 6UL); ++j)
 	{
-		m_VideoPanels[i+1] = new VideoPanel(this, m_ParticipantList[i]);
-		(((i % 2) != 0) ? h1 : h2)->Add(m_VideoPanels[i+1], 1, wxALL | wxEXPAND, 5);
+		if (myName->compare(m_ParticipantList[j]) != 0)
+		{
+			m_VideoPanels[i] = new VideoPanel(this, m_ParticipantList[j]);
+			(((i % 2) == 0) ? h1 : h2)->Add(m_VideoPanels[j], 1, wxALL | wxEXPAND, 5);
+			++i;
+		}
 	}
 	
 	v->Add(h1, 1, wxALL | wxEXPAND);
@@ -188,27 +184,19 @@ M4Frame::M4Frame()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 M4Frame::~M4Frame()
 {
-	// Deallocate stuff
-	for (size_t i = 0; i < (sizeof(m_VideoPanels) / sizeof(m_VideoPanels[0])); ++i)
-	{
-		delete m_VideoPanels[i];
-	}
-
-	for (std::unordered_map<unsigned int, Participant*>::iterator it = m_ParticipantByVideoSsrc.begin(); it != m_ParticipantByVideoSsrc.end(); ++it)
-	{
-		delete it->second;
-	}
-
 	if (m_pSenderPipeline != NULL)
 	{
 		delete m_pSenderPipeline;
-		m_pSenderPipeline = NULL;
 	}
 	
-	if (m_pReceiverPipeline != NULL)
+	for (std::unordered_map<unsigned int, ReceiverPipeline*>::iterator it = m_ReceiverPipelinesByVideoSsrc.begin(); it != m_ReceiverPipelinesByVideoSsrc.end(); ++it)
 	{
-		delete m_pReceiverPipeline;
-		m_pReceiverPipeline = NULL;
+		delete it->second;
+	}
+	
+	for (size_t i = 0; i < (sizeof(m_VideoPanels) / sizeof(m_VideoPanels[0])); ++i)
+	{
+		delete m_VideoPanels[i];
 	}
 }
 
@@ -230,20 +218,20 @@ void M4Frame::OnIdle(wxIdleEvent& evt)
 	m_pSenderPipeline = new SenderPipeline(videoInputName.c_str(), audioInputName.c_str(), this);
 	m_pSenderPipeline->SetBitrate(VIDEO_BITRATE);
 	m_pSenderPipeline->SetWindowSink(m_VideoPanels[0]->GetMediaPanelHandle());
+	const std::string* myName = GetNameForAddress(m_MyAddress);
 	for (size_t i = 0; i < std::min(m_ParticipantList.GetCount(), (size_t)5); ++i)
 	{
-		const char* address = GetAddressForParticipant(m_ParticipantList[i]);
-		assert(address != NULL);
-		m_pSenderPipeline->AddDestination(address);
+		if (myName->compare(m_ParticipantList[i]) != 0)
+		{
+			const char* address = GetAddressForParticipant(m_ParticipantList[i]);
+			assert(address != NULL);
+			m_pSenderPipeline->AddDestination(address, 10000 + 4 * i);
+		}
 	}
 	m_pSenderPipeline->Play();
 	
-	assert(m_pReceiverPipeline == NULL);
-
-	// Create a new receiver pipeline and make it play; we will use its callbacks to hook
-	// up actual video.
-	m_pReceiverPipeline = new ReceiverPipeline(this);
-	m_pReceiverPipeline->Play();
+	// Connect ourselves as the parameter listener
+	m_Annunciator.SetParameterPacketListener(this);
 	
 	// Disconnect the idle handler, as we're done now.
 	Disconnect(wxEVT_IDLE, wxIdleEventHandler(M4Frame::OnIdle));
@@ -271,97 +259,6 @@ void M4Frame::OnNewParameters(const SenderPipeline& rPipeline, const char* pPict
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// M4Frame::OnSsrcActivate
-///
-/// Called by the receiver pipeline when an SSRC becomes active.
-///
-/// @param rPipeline  The receiver pipeline.
-///
-/// @param type  The SSRC type (video or audio).
-///
-/// @param ssrc  The SSRC.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void M4Frame::OnSsrcActivate(ReceiverPipeline& rPipeline, SsrcType type, unsigned int ssrc)
-{
-	// Look up the participant by SSRC.
-	Participant* p = NULL;
-	if (type == ReceiverPipeline::IReceiverNotifySink::SSRC_TYPE_VIDEO)
-	{
-		p = m_ParticipantByVideoSsrc[ssrc];
-	}
-	else
-	{
-		p = m_ParticipantByAudioSsrc[ssrc];
-	}
-	
-	if (p == NULL)
-	{
-		// Need to keep track of active SSRCs for which we haven't yet received parameters
-		// and look them up when we receive parameter packets.
-		if (type == ReceiverPipeline::IReceiverNotifySink::SSRC_TYPE_VIDEO)
-		{
-			m_OrphanedVideoSsrcs.push_back(ssrc);
-		}
-		else
-		{
-			m_OrphanedAudioSsrcs.push_back(ssrc);
-		}
-	}
-	else
-	{
-		// Already received parameters, so activate in the receiver pipeline.
-		if (type == ReceiverPipeline::IReceiverNotifySink::SSRC_TYPE_VIDEO)
-		{
-			VideoPanel* panel = GetPanelForAddress(p->address);
-			assert(panel != NULL);
-			rPipeline.ActivateVideoSsrc(ssrc, p->pictureParameters.c_str(), panel->GetMediaPanelHandle());
-		}
-		else
-		{
-			rPipeline.ActivateAudioSsrc(ssrc);
-		}
-	}
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// M4Frame::OnSsrcDeactivate
-///
-/// Called by the receiver pipeline when an SSRC becomes inactive.
-///
-/// @param rPipeline  The receiver pipeline.
-///
-/// @param type  The SSRC type (video or audio).
-///
-/// @param ssrc  The SSRC.
-///
-/// @param reason  The reason the SSRC became inactive.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void M4Frame::OnSsrcDeactivate(ReceiverPipeline& rPipeline, SsrcType type, unsigned int ssrc, SsrcDeactivateReason reason)
-{
-	Participant* p = NULL;
-	if (type == ReceiverPipeline::IReceiverNotifySink::SSRC_TYPE_VIDEO)
-	{
-		p = m_ParticipantByVideoSsrc[ssrc];
-	}
-	else
-	{
-		p = m_ParticipantByAudioSsrc[ssrc];
-	}
-	if (p != NULL)
-	{
-		rPipeline.DeactivateVideoSsrc(p->videoSsrc);
-		rPipeline.DeactivateAudioSsrc(p->audioSsrc);
-		
-		m_ParticipantByVideoSsrc.erase(p->videoSsrc);
-		m_ParticipantByAudioSsrc.erase(p->audioSsrc);
-		
-		delete p;
-	}
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 /// M4Frame::OnParameterPacket
 ///
 /// Called by the annunciator when a parameter packet is received.
@@ -382,36 +279,25 @@ void M4Frame::OnParameterPacket(const char* address, const char* pictureParamete
 		return;
 	}
 	
-	// Ignore if we already have an active partipant with this SSRC.
-	if (m_ParticipantByVideoSsrc[videoSsrc] != NULL)
+	// Ignore if we already have a sender pipeline
+	if (m_ReceiverPipelinesByVideoSsrc[videoSsrc] != NULL)
 	{
 		return;
 	}
 	
-	// Enter this participant in our dictionaries
-	Participant* p = new Participant(address, pictureParameters, videoSsrc, audioSsrc);
-	m_ParticipantByVideoSsrc[videoSsrc] = p;
-	m_ParticipantByAudioSsrc[audioSsrc] = p;
+	// See if this is in our dictionary; ignore if not.
+	VideoPanel* pPanel = GetPanelForAddress(address);
+	if (pPanel == NULL)
+	{
+		return;
+	}
 	
-	// Check for any ssrcs that have been activated already that we need to turn on
-	for (std::vector<unsigned int>::const_iterator cit = m_OrphanedVideoSsrcs.begin(); cit != m_OrphanedVideoSsrcs.end(); ++cit)
-	{
-		if ((*cit) == videoSsrc)
-		{
-			VideoPanel* panel = GetPanelForAddress(address);
-			assert(panel != NULL);
-			m_pReceiverPipeline->ActivateVideoSsrc(videoSsrc, pictureParameters, panel->GetMediaPanelHandle());
-			break;
-		}
-	}
-	for (std::vector<unsigned int>::const_iterator cit = m_OrphanedAudioSsrcs.begin(); cit != m_OrphanedAudioSsrcs.end(); ++cit)
-	{
-		if ((*cit) == audioSsrc)
-		{
-			m_pReceiverPipeline->ActivateAudioSsrc(audioSsrc);
-			break;
-		}
-	}
+	// If we get here, then there is an entry for this sender in the directory, but no receiver
+	// pipeline yet. Create it now.
+	// TODO: Need port base info/index
+	ReceiverPipeline* pPipeline = new ReceiverPipeline(10000, pictureParameters, pPanel->GetMediaPanelHandle());
+	m_ReceiverPipelinesByVideoSsrc[videoSsrc] = pPipeline;
+	pPipeline->Play();
 }
 
 
@@ -510,11 +396,16 @@ VideoPanel* M4Frame::GetPanelForAddress(const std::string& address)
 	const std::string* pName = GetNameForAddress(address);
 	if (pName != NULL)
 	{
-		for (size_t i = 0; i < m_ParticipantList.GetCount(); ++i)
+		const std::string* myName = GetNameForAddress(m_MyAddress);
+		for (size_t i = 0, j = 1; i < m_ParticipantList.GetCount(); ++i)
 		{
-			if (std::strcmp(pName->c_str(), m_ParticipantList[i].c_str()) == 0)
+			if (myName->compare(m_ParticipantList[i]) != 0)
 			{
-				return m_VideoPanels[i + 1];
+				if (std::strcmp(pName->c_str(), m_ParticipantList[i].c_str()) == 0)
+				{
+					return m_VideoPanels[j];
+				}
+				j++;
 			}
 		}
 	}

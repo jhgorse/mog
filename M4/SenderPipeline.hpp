@@ -55,11 +55,7 @@ public:
 	
 	
 	/// Add the destination IP address or hostname
-	void AddDestination(const char* destination);
-	
-	
-	/// Remove the destination IP address or hostname
-	void RemoveDestination(const char* destination);
+	void AddDestination(const char* destination, uint16_t portBase);
 	
 	
 	/// Set the video bitrate
@@ -78,6 +74,22 @@ protected:
 
 
 private:
+	class Destination
+	{
+	public:
+		inline Destination(const char* hostOrIp, uint16_t portBase)
+			: m_HostOrIp(hostOrIp)
+			, m_PortBase(portBase)
+		{}
+		
+		inline const std::string& HostOrIp() const { return m_HostOrIp; }
+		inline uint16_t PortBase() const { return m_PortBase; }
+		
+	private:
+		std::string m_HostOrIp;
+		uint16_t m_PortBase;
+	};
+	
 	/// The latency of the sender RTP bin, in milliseconds.
 	static const unsigned int RTP_BIN_LATENCY_MS = 10;
 	
@@ -138,7 +150,7 @@ private:
 	
 	
 	/// Vector of destination addresses
-	std::vector<const std::string*> m_vDestinations;
+	std::vector<const Destination*> m_vDestinations;
 	
 	
 	/// Notify pointer

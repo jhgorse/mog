@@ -25,9 +25,9 @@
 #include <wx/wx.h>
 
 #include "ConferenceAnnunciator.hpp"
-#include "ReceiverPipeline.hpp"
 #include "SenderPipeline.hpp"
 
+class ReceiverPipeline;
 class VideoPanel;
 
 
@@ -40,7 +40,6 @@ class VideoPanel;
 class M4Frame
 	: public wxFrame
 	, protected SenderPipeline::ISenderParameterNotifySink
-	, protected ReceiverPipeline::IReceiverNotifySink
 	, protected ConferenceAnnunciator::IParameterPacketListener
 {
 public:
@@ -59,14 +58,6 @@ public:
 protected:
 	/// Called by the sender pipeline when the sender-side parameters are available.
 	virtual void OnNewParameters(const SenderPipeline& rPipeline, const char* pPictureParameters, unsigned int videoSsrc, unsigned int audioSsrc);
-	
-	
-	/// Called by the receiver pipeline when an SSRC (that we are receiving) becomes active.
-	virtual void OnSsrcActivate(ReceiverPipeline& rPipeline, SsrcType type, unsigned int ssrc);
-	
-	
-	/// Called by the receiver pipeline when an SSRC (that we are receiving) becomes inactive.
-	virtual void OnSsrcDeactivate(ReceiverPipeline& rPipeline, SsrcType type, unsigned int ssrc, SsrcDeactivateReason reason);
 	
 	
 	/// Called by the conference annunciator when a parameter packet arrives.
@@ -111,23 +102,6 @@ private:
 	};
 	
 	
-	/// A conference participant, complete with parameters.
-	struct Participant
-	{
-		Participant(std::string addr, std::string p, unsigned int v, unsigned int a)
-			: address(addr)
-			, pictureParameters(p)
-			, videoSsrc(v)
-			, audioSsrc(a)
-		{}
-
-		std::string address;		
-		std::string pictureParameters;
-		unsigned int videoSsrc;
-		unsigned int audioSsrc;
-	};
-	
-	
 	/// NOTE: in an ideal world, we should probably use a mutex to protect most of this instance
 	/// data, as it could be accessed from multiple threads. For now, however, it seems unlikely
 	/// to happen, and this is a prototype.
@@ -140,22 +114,9 @@ private:
 	std::string m_MyAddress;
 	
 	
-	/// A hash of participants by video SSRC
-	std::unordered_map<unsigned int, Participant*> m_ParticipantByVideoSsrc;
+	/// A hash of receiver pipelines by video SSRC
+	std::unordered_map<unsigned int, ReceiverPipeline*> m_ReceiverPipelinesByVideoSsrc;
 	
-	
-	/// A hash of participants by audio SSRC
-	std::unordered_map<unsigned int, Participant*> m_ParticipantByAudioSsrc;
-	
-	
-	/// A list of "orphaned" video SSRCs -- video SSRCs that have become active, but for which we
-	/// have not (yet) received parameter packets.
-	std::vector<unsigned int> m_OrphanedVideoSsrcs;
-	
-	
-	/// A list of "orphaned" audio SSRCs -- audio SSRCs that have become active, but for which we
-	/// have not (yet) received parameter packets.
-	std::vector<unsigned int> m_OrphanedAudioSsrcs;
 	
 	/// The name of the chosen video input
 	std::string videoInputName;
@@ -179,10 +140,6 @@ private:
 	
 	/// The sender pipeline. Not created until the GUI's main thread is started up.
 	SenderPipeline* m_pSenderPipeline;
-	
-	
-	/// The receiver pipeline. Not created until the GUI's main thread is started up.
-	ReceiverPipeline* m_pReceiverPipeline;
 };
 
 #endif // __M4FRAME_HPP__

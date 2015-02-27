@@ -58,27 +58,11 @@ public:
 	
 	
 	/// Constructor
-	explicit ReceiverPipeline(IReceiverNotifySink* pNotifySink = NULL);
+	ReceiverPipeline(uint16_t basePort, const char* pictureParameters, void* pWindowHandle, IReceiverNotifySink* pNotifySink = NULL);
 	
 	
 	/// Destructor
 	virtual ~ReceiverPipeline();
-	
-	
-	/// Activate a video SSRC within the pipeline.
-	void ActivateVideoSsrc(unsigned int ssrc, const char* pictureParameters, void* windowHandle);
-	
-	
-	/// Activate an audio SSRC within the pipeline.
-	void ActivateAudioSsrc(unsigned int ssrc);
-	
-	
-	/// Deactivate a video SSRC within the pipeline.
-	void DeactivateVideoSsrc(unsigned int ssrc);
-	
-	
-	/// Deactivate an audio SSRC within the pipeline.
-	void DeactivateAudioSsrc(unsigned int ssrc);
 		
 
 protected:
@@ -100,10 +84,6 @@ private:
 	/// (Static) callback for when an SSRC leaves due to its stop time
 	static void StaticOnRtpBinNptStop(GstElement* element, guint session, guint ssrc, gpointer data);
 	
-	
-	/// (Static) callback for when pads are added to rtpbin
-	static void StaticOnRtpBinPadAdded(GstElement* element, GstPad* pad, gpointer data);
-	
 
 	/// (Static) callback for when an SSRC times out
 	static void StaticOnRtpBinSenderTimeout(GstElement* element, guint session, guint ssrc, gpointer data);
@@ -117,19 +97,12 @@ private:
 	static void StaticOnRtpBinTimeout(GstElement* element, guint session, guint ssrc, gpointer data);
 	
 	
-	/// (Instance) callback for when pads are added to rtpbin
-	void OnRtpBinPadAdded(GstElement* element, GstPad* pad);
-	
-	
 	/// (Instance) callback for when an SSRC becomes active
 	void OnRtpBinSsrcActivate(IReceiverNotifySink::SsrcType type, unsigned int ssrc);
 	
 	
 	/// (Instance) callback for when an SSRC becomes inactive
 	void OnRtpBinSsrcDeactivate(IReceiverNotifySink::SsrcType type, unsigned int ssrc, IReceiverNotifySink::SsrcDeactivateReason reason);
-	
-	/// Remove and unlink everything downstream from this element.
-	void RemoveAndUnlinkDownstream(GstElement* element);
 	
 	
 	/// Notify pointer

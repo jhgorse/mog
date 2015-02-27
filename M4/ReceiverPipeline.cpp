@@ -30,18 +30,29 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 const char ReceiverPipeline::PIPELINE_STRING[] =
 	"   rtpbin name=rtpbin latency=10"
-	"   udpsrc port=10000"
+	"   udpsrc name=vsrc"
 	" ! application/x-rtp,media=video,clock-rate=90000,encoding-name=H264,payload=96"
 	" ! rtpbin.recv_rtp_sink_0"
-	"   udpsrc port=10001"
+	"   udpsrc name=vcsrc"
 	" ! application/x-rtcp"
 	" ! rtpbin.recv_rtcp_sink_0"
-	"   udpsrc port=10002"
+	"   udpsrc name=asrc"
 	" ! application/x-rtp,media=audio,clock-rate=44100,encoding-name=L16,encoding-params=1,channels=1,payload=96"
 	" ! rtpbin.recv_rtp_sink_1"
-	"   udpsrc port=10003"
+	"   udpsrc name=acsrc"
 	" ! application/x-rtcp"
 	" ! rtpbin.recv_rtcp_sink_1"
+	"   rtpbin."
+	" ! capsfilter name=vfilter caps=\"application/x-rtp,media=video\""
+	" ! rtph264depay"
+	" ! video/x-h264,stream-format=avc,alignment=au"
+	" ! avdec_h264"
+	" ! videoconvert"
+	" ! osxvideosink name=vsink enable-last-sample=false sync=false"
+	"   rtpbin."
+	" ! rtpL16depay"
+	" ! audioconvert"
+	" ! osxaudiosink enable-last-sample=false buffer-time=92880"
 ;
 
 
@@ -51,7 +62,7 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 /// Parse the launch string to construct the pipeline; obtain some references; and install a
 /// callback function for when pads are added to rtpbin.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-ReceiverPipeline::ReceiverPipeline(IReceiverNotifySink* pNotifySink)
+ReceiverPipeline::ReceiverPipeline(uint16_t basePort, const char* pictureParameters, void* pWindowHandle, IReceiverNotifySink* pNotifySink)
 	: PipelineBase(gst_parse_launch(PIPELINE_STRING, NULL))
 	, m_pNotifySink(pNotifySink)
 	, m_ActiveSsrcs()
@@ -61,10 +72,45 @@ ReceiverPipeline::ReceiverPipeline(IReceiverNotifySink* pNotifySink)
 	g_signal_connect(m_pRtpBin, "on-bye-ssrc",       G_CALLBACK(StaticOnRtpBinByeSsrc),       this);
 	g_signal_connect(m_pRtpBin, "on-bye-timeout",    G_CALLBACK(StaticOnRtpBinByeTimeout),    this);
 	g_signal_connect(m_pRtpBin, "on-npt-stop",       G_CALLBACK(StaticOnRtpBinNptStop),       this);
-	g_signal_connect(m_pRtpBin, "pad-added",         G_CALLBACK(StaticOnRtpBinPadAdded),      this);
 	g_signal_connect(m_pRtpBin, "on-sender-timeout", G_CALLBACK(StaticOnRtpBinSenderTimeout), this);
 	g_signal_connect(m_pRtpBin, "on-ssrc-active",    G_CALLBACK(StaticOnRtpBinSsrcActive),    this);
 	g_signal_connect(m_pRtpBin, "on-timeout",        G_CALLBACK(StaticOnRtpBinTimeout),       this);
+	
+	// Set all the udpsrc port properties
+	GstElement* e = gst_bin_get_by_name(GST_BIN(Pipeline()), "vsrc");
+	assert(e != NULL);
+	g_object_set(e, "port", basePort, NULL);
+	gst_object_unref(e);
+	
+	e = gst_bin_get_by_name(GST_BIN(Pipeline()), "vcsrc");
+	assert(e != NULL);
+	g_object_set(e, "port", basePort + 1, NULL);
+	gst_object_unref(e);
+	
+	e = gst_bin_get_by_name(GST_BIN(Pipeline()), "asrc");
+	assert(e != NULL);
+	g_object_set(e, "port", basePort + 2, NULL);
+	gst_object_unref(e);
+	
+	e = gst_bin_get_by_name(GST_BIN(Pipeline()), "acsrc");
+	assert(e != NULL);
+	g_object_set(e, "port", basePort + 3, NULL);
+	gst_object_unref(e);
+	
+	// Set vfilter caps sprop-parameter-sets = pictureParameters
+	e = gst_bin_get_by_name(GST_BIN(Pipeline()), "vfilter");
+	assert(e != NULL);
+	gchar* capsString = new gchar[std::strlen("application/x-rtp,media=video,sprop-parameter-sets=\"\"") + std::strlen(pictureParameters) + 1];
+	std::sprintf(capsString, "application/x-rtp,media=video,sprop-parameter-sets=\"%s\"", pictureParameters);
+	gst_util_set_object_arg(G_OBJECT(e), "caps", capsString);
+	delete[] capsString;
+	gst_object_unref(e);
+	
+	// Set vsink to display on pWindowHandle
+	e = gst_bin_get_by_name(GST_BIN(Pipeline()), "vsink");
+	assert(e != NULL);
+	gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(e), reinterpret_cast<guintptr>(pWindowHandle));
+	gst_object_unref(e);
 }
 
 
@@ -77,212 +123,6 @@ ReceiverPipeline::~ReceiverPipeline()
 {
 	Nullify();
 	gst_object_unref(m_pRtpBin);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// ReceiverPipeline::ActivateVideoSsrc()
-///
-/// Activate a video SSRC within the pipeline. This creates the necessary elements to depayload,
-/// decode, and display the video data, connecting its videosink to a native window handle.
-///
-/// @param ssrc  The SSRC to be activated.
-///
-/// @param pictureParameters  The picture parameters string.
-///
-/// @param windowHandle  The native window handle.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void ReceiverPipeline::ActivateVideoSsrc(unsigned int ssrc, const char* pictureParameters, void* windowHandle)
-{
-	// Go looking for a recv rtp src pad with the name corresponding to this ssrc
-	char padName[sizeof("recv_rtp_src_0_4294967295_96")];
-	std::sprintf(padName, "recv_rtp_src_0_%u_96", ssrc);
-	GstPad* ssrcPad = gst_element_find_src_pad_by_name(m_pRtpBin, padName);
-	if (ssrcPad != NULL)
-	{
-		// Hook up a new video display chain here
-		GstElement* capsfilter = gst_element_factory_make("capsfilter", NULL);
-		GstCaps* caps = gst_caps_from_string("application/x-rtp,sprop-parameter-sets=\"\"");
-		GValue valParams = G_VALUE_INIT;
-		g_value_init(&valParams, G_TYPE_STRING);
-		g_value_set_string(&valParams, pictureParameters);
-		gst_structure_set_value(gst_caps_get_structure(caps, 0), "sprop-parameter-sets", &valParams);
-	    g_object_set(capsfilter,
-	    	"caps", caps,
-	    	NULL);
-	    gst_caps_unref(caps);
-		
-		GstElement* depay = gst_element_factory_make("rtph264depay", NULL);
-		assert(depay != NULL);
-		
-		GstElement* filter = gst_element_factory_make("capsfilter", NULL);
-		gst_util_set_object_arg(G_OBJECT(filter), "caps", "video/x-h264,stream-format=avc,alignment=au");
-		assert(filter != NULL);
-		
-		GstElement* decoder = gst_element_factory_make("avdec_h264", NULL);
-		assert(decoder != NULL);
-		
-		GstElement* convert = gst_element_factory_make("videoconvert", NULL);
-		assert(convert != NULL);
-		
-		GstElement* videosink = gst_element_factory_make("osxvideosink", NULL);
-		assert(videosink != NULL);
-		g_object_set(videosink,
-			"enable-last-sample", FALSE,
-			"sync", FALSE,
-			NULL
-		);
-		gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(videosink), reinterpret_cast<guintptr>(windowHandle));
-
-		gst_bin_add_many(GST_BIN(Pipeline()), capsfilter, depay, filter, decoder, convert, videosink, NULL);
-		assert(gst_element_link_many(capsfilter, depay, filter, decoder, convert, videosink, NULL));
-		
-		GstPad* sink = gst_element_get_static_pad(capsfilter, "sink");
-		assert(sink != NULL);
-		GstPad *peer = gst_pad_get_peer(ssrcPad);
-		gst_pad_unlink(ssrcPad, peer);
-		GstElement* peerElement = GST_ELEMENT(gst_pad_get_parent(peer));
-		assert(peerElement != NULL);
-		gst_object_unref(peer);
-		RemoveAndUnlinkDownstream(peerElement);
-		gst_object_unref(peerElement);
-		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
-		gst_object_unref(sink);
-		
-		gst_element_sync_state_with_parent(capsfilter);
-		gst_element_sync_state_with_parent(depay);
-		gst_element_sync_state_with_parent(filter);
-		gst_element_sync_state_with_parent(decoder);
-		gst_element_sync_state_with_parent(convert);
-		gst_element_sync_state_with_parent(videosink);
-	}
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// ReceiverPipeline::ActivateAudioSsrc()
-///
-/// Activate an audio SSRC within the pipeline. This creates the necessary elements to depayload,
-/// decode, and play back the audio data.
-///
-/// @param ssrc  The SSRC to be activated.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void ReceiverPipeline::ActivateAudioSsrc(unsigned int ssrc)
-{
-	// Go looking for a recv rtp src pad with the name corresponding to this ssrc
-	char padName[sizeof("recv_rtp_src_1_4294967295_96")];
-	std::sprintf(padName, "recv_rtp_src_1_%u_96", ssrc);
-	GstPad* ssrcPad = gst_element_find_src_pad_by_name(m_pRtpBin, padName);
-	if (ssrcPad != NULL)
-	{
-		// Hook up rtpbin's src pad to a real sink.
-		GstElement* depay = gst_element_factory_make("rtpL16depay", NULL);
-		assert(depay != NULL);
-		
-		GstElement* convert = gst_element_factory_make("audioconvert", NULL);
-		assert(convert != NULL);
-		
-		GstElement* audiosink = gst_element_factory_make("osxaudiosink", NULL);
-		assert(audiosink != NULL);
-		g_object_set(audiosink,
-			"enable-last-sample", FALSE,
-			"buffer-time", 92880,
-			NULL
-		);
-		
-		gst_bin_add_many(GST_BIN(Pipeline()), depay, convert, audiosink, NULL);
-		assert(gst_element_link_many(depay, convert, audiosink, NULL));
-		
-		GstPad* sink = gst_element_get_static_pad(depay, "sink");
-		assert(sink != NULL);
-		GstPad *peer = gst_pad_get_peer(ssrcPad);
-		gst_pad_unlink(ssrcPad, peer);
-		GstElement* peerElement = GST_ELEMENT(gst_pad_get_parent(peer));
-		assert(peerElement != NULL);
-		gst_object_unref(peer);
-		RemoveAndUnlinkDownstream(peerElement);
-		gst_object_unref(peerElement);
-		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
-		gst_object_unref(sink);
-		
-		gst_element_sync_state_with_parent(depay);
-		gst_element_sync_state_with_parent(convert);
-		gst_element_sync_state_with_parent(audiosink);
-	}
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// ReceiverPipeline::DeactivateVideoSsrc()
-///
-/// Deactivate a video SSRC within the pipeline.
-///
-/// @param ssrc  The SSRC to be deactivated.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void ReceiverPipeline::DeactivateVideoSsrc(unsigned int ssrc)
-{
-	// Go looking for a recv rtp src pad with the name corresponding to this ssrc
-	char padName[sizeof("recv_rtp_src_0_4294967295_96")];
-	std::sprintf(padName, "recv_rtp_src_0_%u_96", ssrc);
-	GstPad* ssrcPad = gst_element_find_src_pad_by_name(m_pRtpBin, padName);
-	if (ssrcPad != NULL)
-	{
-		// Connect this pad to a fakesink
-		GstElement* fakesink = gst_element_factory_make("fakesink", NULL);
-		assert(fakesink != NULL);
-		gst_bin_add(GST_BIN(Pipeline()), fakesink);
-		
-		GstPad* sink = gst_element_get_static_pad(fakesink, "sink");
-		assert(sink != NULL);
-		GstPad *peer = gst_pad_get_peer(ssrcPad);
-		gst_pad_unlink(ssrcPad, peer);
-		GstElement* peerElement = GST_ELEMENT(gst_pad_get_parent(peer));
-		assert(peerElement != NULL);
-		gst_object_unref(peer);
-		RemoveAndUnlinkDownstream(peerElement);
-		gst_object_unref(peerElement);
-		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
-		gst_object_unref(sink);
-		
-		gst_element_sync_state_with_parent(fakesink);
-	}
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// ReceiverPipeline::DeactivateAudioSsrc()
-///
-/// Deactivate an audio SSRC within the pipeline.
-///
-/// @param ssrc  The SSRC to be deactivated.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void ReceiverPipeline::DeactivateAudioSsrc(unsigned int ssrc)
-{
-	// Go looking for a recv rtp src pad with the name corresponding to this ssrc
-	char padName[sizeof("recv_rtp_src_1_4294967295_96")];
-	std::sprintf(padName, "recv_rtp_src_1_%u_96", ssrc);
-	GstPad* ssrcPad = gst_element_find_src_pad_by_name(m_pRtpBin, padName);
-	if (ssrcPad != NULL)
-	{
-		// Connect this pad to a fakesink
-		GstElement* fakesink = gst_element_factory_make("fakesink", NULL);
-		assert(fakesink != NULL);
-		gst_bin_add(GST_BIN(Pipeline()), fakesink);
-		
-		GstPad* sink = gst_element_get_static_pad(fakesink, "sink");
-		assert(sink != NULL);
-		GstPad *peer = gst_pad_get_peer(ssrcPad);
-		gst_pad_unlink(ssrcPad, peer);
-		GstElement* peerElement = GST_ELEMENT(gst_pad_get_parent(peer));
-		assert(peerElement != NULL);
-		gst_object_unref(peer);
-		RemoveAndUnlinkDownstream(peerElement);
-		gst_object_unref(peerElement);
-		assert(gst_pad_link(ssrcPad, sink) == GST_PAD_LINK_OK);
-		gst_object_unref(sink);
-		
-		gst_element_sync_state_with_parent(fakesink);
-	}
 }
 
 
@@ -314,15 +154,6 @@ void ReceiverPipeline::StaticOnRtpBinNptStop(GstElement* element, guint session,
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Static callback function for when pads are added to rtpbin. Calls the instance version.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void ReceiverPipeline::StaticOnRtpBinPadAdded(GstElement* element, GstPad* pad, gpointer data)
-{
-	((ReceiverPipeline *)data)->OnRtpBinPadAdded(element, pad);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 /// (Static) callback for when an SSRC times out
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void ReceiverPipeline::StaticOnRtpBinSenderTimeout(GstElement* element, guint session, guint ssrc, gpointer data)
@@ -346,49 +177,6 @@ void ReceiverPipeline::StaticOnRtpBinSsrcActive(GstElement* element, guint sessi
 void ReceiverPipeline::StaticOnRtpBinTimeout(GstElement* element, guint session, guint ssrc, gpointer data)
 {
 	((ReceiverPipeline *)data)->OnRtpBinSsrcDeactivate(((session == 0) ? IReceiverNotifySink::SSRC_TYPE_VIDEO : IReceiverNotifySink::SSRC_TYPE_AUDIO), ssrc, IReceiverNotifySink::SSRC_DEACTIVATE_REASON_TIMEOUT);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// Callback function for when pads are added to rtpbin.
-///
-/// Because the (sender) RtpBins randomly create new SSRCs, if another entity was stopped and
-/// relaunched, the (receiver) rtpbin element will create a new dynamic src pad for the new ssrc.
-/// In this callback, we disconnect any existing link to the appropriate payloader and connect the
-/// new pad (so there's only one at a time).
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void ReceiverPipeline::OnRtpBinPadAdded(GstElement* element, GstPad* pad)
-{
-	assert(element == m_pRtpBin);
-	
-	// Check the media member of the caps to see what we've received. Point sink_pad at the
-	// sink pad for that media type.
-	GstCaps* pad_caps = gst_pad_get_current_caps(pad);
-	const gchar* media_type = g_value_get_string(gst_structure_get_value(gst_caps_get_structure(pad_caps, 0), "media"));
-	
-	if ((g_strcmp0(media_type, "audio") == 0) || (g_strcmp0(media_type, "video") == 0))
-	{
-		GstElement* fakesink = gst_element_factory_make("fakesink", NULL);
-		assert(fakesink != NULL);
-		gst_bin_add(GST_BIN(Pipeline()), fakesink);
-		
-		GstPad* sink = gst_element_get_static_pad(fakesink, "sink");
-		assert(sink != NULL);
-		assert(gst_pad_link(pad, sink) == GST_PAD_LINK_OK);
-		gst_object_unref(sink);
-		
-		gst_element_sync_state_with_parent(fakesink);
-	}
-	else
-	{
-		const gchar* pad_name = gst_pad_get_name(pad);
-		const gchar* caps_string = gst_caps_to_string(pad_caps);
-		g_message("%s: Pad \"%s\" with caps \"%s\" added to rtpbin! Not a known media type!", __func__, pad_name, caps_string);
-		g_free(const_cast<gchar*>(caps_string));
-		g_free(const_cast<gchar*>(pad_name));
-	}
-	
-	gst_caps_unref(pad_caps);
 }
 
 
@@ -423,46 +211,4 @@ void ReceiverPipeline::OnRtpBinSsrcDeactivate(ReceiverPipeline::IReceiverNotifyS
 		m_ActiveSsrcs.erase(it);
 		m_pNotifySink->OnSsrcDeactivate(*this, type, ssrc, reason);
 	}
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// ReceiverPipeline::RemoveAndUnlinkDownstream
-///
-/// Remove and unlink everything downstream from this element .
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void ReceiverPipeline::RemoveAndUnlinkDownstream(GstElement* element)
-{
-	// Iterate through all the src pads on element
-	GstIterator *iter = gst_element_iterate_src_pads(element);
-	GValue vPad = G_VALUE_INIT;
-	while (gst_iterator_next(iter, &vPad) == GST_ITERATOR_OK)
-	{
-		GstPad* pad = GST_PAD(g_value_get_object(&vPad));
-		assert(pad != NULL);
-		
-		// Get the peer pad of this src
-		GstPad* peerPad = gst_pad_get_peer(pad);
-		if (peerPad != NULL)
-		{
-			// Unlink the two pads
-			assert(gst_pad_unlink(pad, peerPad));
-			
-			// Get the peer's parent element
-			GstElement* peerElement = GST_ELEMENT(gst_pad_get_parent(peerPad));
-			assert(peerElement != NULL);
-			
-			// We're done with the pad ref now
-			gst_object_unref(peerPad);
-			
-			// Call RemoveAndUnlinkDownstream recursively with peer element
-			RemoveAndUnlinkDownstream(peerElement);
-			
-			// Unref peer element
-			gst_object_unref(peerElement);
-		}
-	}
-	gst_iterator_free(iter);
-	
-	// Remove element from bin
-	assert(gst_bin_remove(GST_BIN(Pipeline()), element));
 }

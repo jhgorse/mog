@@ -85,32 +85,9 @@ SenderPipeline::~SenderPipeline()
 ///
 /// Add a destination address or hostname to the sender's pipeline.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void SenderPipeline::AddDestination(const char* destination)
+void SenderPipeline::AddDestination(const char* destination, uint16_t portBase)
 {
-	m_vDestinations.push_back(new std::string(destination));
-	SetDestinations();
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// SenderPipeline::RemoveDestination()
-///
-/// Remove a destination address or hostname to the sender's pipeline.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void SenderPipeline::RemoveDestination(const char* destination)
-{
-	std::vector<const std::string*>::const_iterator it = m_vDestinations.begin();
-	while (it != m_vDestinations.end())
-	{
-		if ((*it)->compare(destination) == 0)
-		{
-			m_vDestinations.erase(it);
-		}
-		else
-		{
-			++it;
-		}
-	}
+	m_vDestinations.push_back(new Destination(destination, portBase));
 	SetDestinations();
 }
 
@@ -356,28 +333,28 @@ void SenderPipeline::SetDestinations()
 	static const struct
 	{
 		GstElement* pElement;
-		const char pPortString[6];
+		uint16_t portOffset;
 	}
 	pairs[] = 
 	{
-		{m_pVideoRtpSink,  "10000"},
-		{m_pVideoRtcpSink, "10001"},
-		{m_pAudioRtpSink,  "10002"},
-		{m_pAudioRtcpSink, "10003"},
+		{m_pVideoRtpSink,  0},
+		{m_pVideoRtcpSink, 1},
+		{m_pAudioRtpSink,  2},
+		{m_pAudioRtcpSink, 3},
 	};
 	
 	for (size_t i = 0; i < sizeof(pairs) / sizeof(pairs[0]); i++)
 	{
 		std::string clients;
-		for (std::vector<const std::string*>::const_iterator it = m_vDestinations.begin(); it != m_vDestinations.end(); ++it)
+		for (std::vector<const Destination*>::const_iterator it = m_vDestinations.begin(); it != m_vDestinations.end(); ++it)
 		{
 			if (!clients.empty())
 			{
 				clients += ",";
 			}
-			clients += **it;
+			clients += (*it)->HostOrIp();
 			clients += ":";
-			clients += pairs[i].pPortString;
+			clients += (*it)->PortBase() + pairs[i].portOffset;
 		}
 		g_object_set(pairs[i].pElement, "clients", clients.c_str(), NULL);
 	}
