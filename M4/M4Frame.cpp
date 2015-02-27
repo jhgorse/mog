@@ -111,7 +111,7 @@ M4Frame::M4Frame()
 		{
 			participantAddresses[i] = GetAddressForParticipant(m_ParticipantList[i].c_str());
 		}
-		m_Annunciator.SendParticipantList(participantAddresses, m_ParticipantList.GetCount() + 1);
+		m_Annunciator.SendParticipantList(participantAddresses, m_ParticipantList.GetCount());
 		delete[] participantAddresses;
 	}
 	else
