@@ -160,7 +160,7 @@ M4Frame::M4Frame()
 		if (myName->compare(m_ParticipantList[j]) != 0)
 		{
 			m_VideoPanels[i] = new VideoPanel(this, m_ParticipantList[j]);
-			(((i % 2) == 0) ? h1 : h2)->Add(m_VideoPanels[j], 1, wxALL | wxEXPAND, 5);
+			(((i % 2) == 0) ? h1 : h2)->Add(m_VideoPanels[i], 1, wxALL | wxEXPAND, 5);
 			++i;
 		}
 	}
@@ -279,14 +279,15 @@ void M4Frame::OnParameterPacket(const char* address, const char* pictureParamete
 		return;
 	}
 	
-	// Ignore if we already have a sender pipeline
+	// Ignore if we already have a receiver pipeline
 	if (m_ReceiverPipelinesByVideoSsrc[videoSsrc] != NULL)
 	{
 		return;
 	}
 	
 	// See if this is in our dictionary; ignore if not.
-	VideoPanel* pPanel = GetPanelForAddress(address);
+	size_t index;
+	VideoPanel* pPanel = GetPanelForAddress(address, index);
 	if (pPanel == NULL)
 	{
 		return;
@@ -294,8 +295,7 @@ void M4Frame::OnParameterPacket(const char* address, const char* pictureParamete
 	
 	// If we get here, then there is an entry for this sender in the directory, but no receiver
 	// pipeline yet. Create it now.
-	// TODO: Need port base info/index
-	ReceiverPipeline* pPipeline = new ReceiverPipeline(10000, pictureParameters, pPanel->GetMediaPanelHandle());
+	ReceiverPipeline* pPipeline = new ReceiverPipeline(10000 + 4 * index, pictureParameters, pPanel->GetMediaPanelHandle());
 	m_ReceiverPipelinesByVideoSsrc[videoSsrc] = pPipeline;
 	pPipeline->Play();
 }
@@ -391,7 +391,7 @@ const std::string* M4Frame::GetNameForAddress(const std::string& address)
 ///
 /// @return  A VideoPanel pointer, or NULL if the address could not be found.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-VideoPanel* M4Frame::GetPanelForAddress(const std::string& address)
+VideoPanel* M4Frame::GetPanelForAddress(const std::string& address, size_t& rIndexOut)
 {
 	const std::string* pName = GetNameForAddress(address);
 	if (pName != NULL)
@@ -403,6 +403,7 @@ VideoPanel* M4Frame::GetPanelForAddress(const std::string& address)
 			{
 				if (std::strcmp(pName->c_str(), m_ParticipantList[i].c_str()) == 0)
 				{
+					rIndexOut = i;
 					return m_VideoPanels[j];
 				}
 				j++;

@@ -86,7 +86,7 @@ private:
 	
 	
 	/// Get the video panel for a participant address.
-	VideoPanel* GetPanelForAddress(const std::string& address);
+	VideoPanel* GetPanelForAddress(const std::string& address, size_t& rIndexOut);
 	
 	
 	/// A name and address entry in the directory.
