@@ -218,14 +218,27 @@ void M4Frame::OnIdle(wxIdleEvent& evt)
 	m_pSenderPipeline = new SenderPipeline(videoInputName.c_str(), audioInputName.c_str(), this);
 	m_pSenderPipeline->SetBitrate(VIDEO_BITRATE);
 	m_pSenderPipeline->SetWindowSink(m_VideoPanels[0]->GetMediaPanelHandle());
+	
+	// Find "my" index in the participant list; this is the index we use for the port offset for sending.
 	const std::string* myName = GetNameForAddress(m_MyAddress);
-	for (size_t i = 0; i < std::min(m_ParticipantList.GetCount(), (size_t)5); ++i)
+	size_t myIndex = 0;
+	for (size_t i = 0; i < m_ParticipantList.GetCount(); ++i)
+	{
+		if (myName->compare(m_ParticipantList[i]) == 0)
+		{
+			myIndex = i;
+			break;
+		}
+	}
+	
+	// Now add destinations for each of the participants.
+	for (size_t i = 0; i < m_ParticipantList.GetCount(); ++i)
 	{
 		if (myName->compare(m_ParticipantList[i]) != 0)
 		{
 			const char* address = GetAddressForParticipant(m_ParticipantList[i]);
 			assert(address != NULL);
-			m_pSenderPipeline->AddDestination(address, 10000 + 4 * i);
+			m_pSenderPipeline->AddDestination(address, 10000 + 4 * myIndex);
 		}
 	}
 	m_pSenderPipeline->Play();
