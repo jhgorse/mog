@@ -210,6 +210,9 @@ void ReceiverPipeline::OnRtpBinSsrcDeactivate(ReceiverPipeline::IReceiverNotifyS
 	if ((it = m_ActiveSsrcs.find(ssrc)) != m_ActiveSsrcs.end())
 	{
 		m_ActiveSsrcs.erase(it);
-		m_pNotifySink->OnSsrcDeactivate(*this, type, ssrc, reason);
+		if (m_pNotifySink != NULL)
+		{
+			m_pNotifySink->OnSsrcDeactivate(*this, type, ssrc, reason);
+		}
 	}
 }
