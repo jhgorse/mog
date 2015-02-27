@@ -353,8 +353,9 @@ void SenderPipeline::SetDestinations()
 				clients += ",";
 			}
 			clients += (*it)->HostOrIp();
-			clients += ":";
-			clients += (*it)->PortBase() + pairs[i].portOffset;
+			char portStr[sizeof(":65535")];
+			std::sprintf(portStr, ":%hu", static_cast<uint16_t>((*it)->PortBase() + pairs[i].portOffset));
+			clients += portStr;
 		}
 		g_object_set(pairs[i].pElement, "clients", clients.c_str(), NULL);
 	}
