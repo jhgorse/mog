@@ -191,9 +191,6 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 	g_object_set(G_OBJECT(venc), "key-int-max", 10, NULL);
 	
 	GstElement* rtph264pay = gst_element_factory_make("rtph264pay", NULL);
-	g_object_set(G_OBJECT(rtph264pay),
-		"mtu", 8900,
-		NULL);
 	
 	GstElement* vsink = gst_element_factory_make("multiudpsink", "vsink");
 	g_object_set(G_OBJECT(vsink),
