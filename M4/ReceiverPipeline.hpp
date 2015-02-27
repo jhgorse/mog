@@ -63,6 +63,10 @@ public:
 	
 	/// Destructor
 	virtual ~ReceiverPipeline();
+	
+	
+	/// Get the display window sink using a native window handle.
+	const void* GetWindowSink() const { return m_DisplayWindowHandle; }
 		
 
 protected:
@@ -115,6 +119,10 @@ private:
 	
 	/// Reference to rtpbin element
 	GstElement* const m_pRtpBin;
+	
+	
+	/// The display window handle
+	const void* const m_DisplayWindowHandle;
 }; // END class ReceiverPipeline
 
 #endif // __RECEIVER_PIPELINE_HPP__

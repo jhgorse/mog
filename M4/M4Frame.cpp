@@ -293,7 +293,7 @@ void M4Frame::OnParameterPacket(const char* address, const char* pictureParamete
 	}
 	
 	// Ignore if we already have a receiver pipeline
-	if (m_ReceiverPipelinesByVideoSsrc[videoSsrc] != NULL)
+	if (m_ReceiverPipelinesByVideoSsrc.find(videoSsrc) != m_ReceiverPipelinesByVideoSsrc.end())
 	{
 		return;
 	}
@@ -304,6 +304,18 @@ void M4Frame::OnParameterPacket(const char* address, const char* pictureParamete
 	if (pPanel == NULL)
 	{
 		return;
+	}
+	
+	// We might have had a receiver pipeline from a previous SSRC from the same sender. Look
+	// through the pipelines to see if any match the video sink, and if so, delete them.
+	for (std::unordered_map<unsigned int, ReceiverPipeline*>::iterator it = m_ReceiverPipelinesByVideoSsrc.begin(); it != m_ReceiverPipelinesByVideoSsrc.end(); ++it)
+	{
+		if (it->second->GetWindowSink() == pPanel->GetMediaPanelHandle())
+		{
+			delete it->second;
+			m_ReceiverPipelinesByVideoSsrc.erase(it);
+			break;
+		}
 	}
 	
 	// If we get here, then there is an entry for this sender in the directory, but no receiver

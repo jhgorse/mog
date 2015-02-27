@@ -67,6 +67,7 @@ ReceiverPipeline::ReceiverPipeline(uint16_t basePort, const char* pictureParamet
 	, m_pNotifySink(pNotifySink)
 	, m_ActiveSsrcs()
 	, m_pRtpBin(gst_bin_get_by_name(GST_BIN(Pipeline()), "rtpbin"))
+	, m_DisplayWindowHandle(pWindowHandle)
 {
 	assert(m_pRtpBin != NULL);
 	g_signal_connect(m_pRtpBin, "on-bye-ssrc",       G_CALLBACK(StaticOnRtpBinByeSsrc),       this);
