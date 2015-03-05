@@ -54,7 +54,7 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	" ! rtpspeexdepay"
 	" ! speexdec"
 	" %s "
-	" ! osxaudiosink name=asink enable-last-sample=false sync=false"
+	" ! osxaudiosink name=asink enable-last-sample=false sync=false %s"
 ;
 
 
@@ -133,14 +133,18 @@ GstElement* ReceiverPipeline::CreatePipeline(const char* audioDeviceName)
 	if (std::strncmp(audioDeviceName, "Built-in Mic", sizeof("Built-in Mic") - 1) != 0)
 	{
 		// not built-in
+		int idx = SenderPipeline::GetAudioDeviceIndex(audioDeviceName);
+		assert(idx >= 0);
+		char deviceString[sizeof("device=-2147483648")];
+		std::sprintf(deviceString, "device=%d", idx);
 		pipelineString = new char[sizeof(PIPELINE_STRING)];
-		std::sprintf(pipelineString, PIPELINE_STRING, "");
+		std::sprintf(pipelineString, PIPELINE_STRING, "", deviceString);
 	}
 	else
 	{
 		// built-in
 		pipelineString = new char[sizeof(PIPELINE_STRING) + sizeof("audioconvert ! audioresample")];
-		std::sprintf(pipelineString, PIPELINE_STRING, " ! audioconvert ! audioresample");
+		std::sprintf(pipelineString, PIPELINE_STRING, " ! audioconvert ! audioresample", "");
 	}
 	std::printf("Launching \"%s\"\n", pipelineString);
 	GstElement* ret = gst_parse_launch(pipelineString, NULL);
