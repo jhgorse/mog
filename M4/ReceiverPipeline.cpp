@@ -37,7 +37,7 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	" ! application/x-rtcp"
 	" ! rtpbin.recv_rtcp_sink_0"
 	"   udpsrc name=asrc"
-	" ! application/x-rtp,media=audio,clock-rate=44100,encoding-name=L16,encoding-params=1,channels=1,payload=96"
+	" ! application/x-rtp,media=audio,clock-rate=44100,encoding-name=SPEEX,encoding-params=1,channels=1,payload=96"
 	" ! rtpbin.recv_rtp_sink_1"
 	"   udpsrc name=acsrc"
 	" ! application/x-rtcp"
@@ -50,9 +50,9 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	" ! videoconvert"
 	" ! osxvideosink name=vsink enable-last-sample=false sync=false"
 	"   rtpbin."
-	" ! rtpL16depay"
-	" ! audioconvert"
-	" ! osxaudiosink enable-last-sample=false buffer-time=92880"
+	" ! rtpspeexdepay"
+	" ! speexdec"
+	" ! osxaudiosink enable-last-sample=false sync=false"
 ;
 
 
