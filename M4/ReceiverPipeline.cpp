@@ -53,6 +53,8 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	"   rtpbin."
 	" ! rtpspeexdepay"
 	" ! speexdec"
+	" ! audioresample"
+	" ! audioconvert"
 	" ! osxaudiosink enable-last-sample=false sync=false"
 ;
 
