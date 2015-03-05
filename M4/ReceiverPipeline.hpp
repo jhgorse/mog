@@ -35,7 +35,7 @@ class ReceiverPipeline : public PipelineBase
 {
 public:	
 	/// Constructor
-	ReceiverPipeline(uint16_t basePort, const char* pictureParameters, void* pWindowHandle);
+	ReceiverPipeline(uint16_t basePort, const char* audioDeviceName, const char* pictureParameters, void* pWindowHandle);
 	
 	
 	/// Destructor
@@ -54,6 +54,10 @@ private:
 	static const char PIPELINE_STRING[];
 	
 	
+	/// static function to construct a pipeline (for use in member init. list)
+	static GstElement* CreatePipeline(const char* audioDeviceName);
+
+
 	/// Reference to rtpbin element
 	GstElement* const m_pRtpBin;
 	

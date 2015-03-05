@@ -320,7 +320,7 @@ void M4Frame::OnParameterPacket(const char* address, const char* pictureParamete
 	
 	// If we get here, then there is an entry for this sender in the directory, but no receiver
 	// pipeline yet. Create it now.
-	ReceiverPipeline* pPipeline = new ReceiverPipeline(10000 + 4 * index, pictureParameters, pPanel->GetMediaPanelHandle());
+	ReceiverPipeline* pPipeline = new ReceiverPipeline(10000 + 4 * index, audioInputName.c_str(), pictureParameters, pPanel->GetMediaPanelHandle());
 	m_ReceiverPipelinesByVideoSsrc[videoSsrc] = pPipeline;
 	pPipeline->Play();
 }

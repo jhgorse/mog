@@ -23,6 +23,7 @@
 #include <gst/video/videooverlay.h>
 #include "gst_utility.hpp"      // for gst_element_find_sink_pad_by_name
 #include "ReceiverPipeline.hpp" // for class declaration
+#include "SenderPipeline.hpp"   // for static helper functions
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// These are the mostly "static" parts of the pipeline, represented as a string in
@@ -37,7 +38,7 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	" ! application/x-rtcp"
 	" ! rtpbin.recv_rtcp_sink_0"
 	"   udpsrc name=asrc"
-	" ! application/x-rtp,media=audio,clock-rate=44100,encoding-name=SPEEX,encoding-params=1,channels=1,payload=96"
+	" ! application/x-rtp,media=audio,clock-rate=%d,encoding-name=SPEEX,encoding-params=1,channels=1,payload=96"
 	" ! rtpbin.recv_rtp_sink_1"
 	"   udpsrc name=acsrc"
 	" ! application/x-rtcp"
@@ -52,7 +53,7 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	"   rtpbin."
 	" ! rtpspeexdepay"
 	" ! speexdec"
-	" ! osxaudiosink enable-last-sample=false sync=false"
+	" ! osxaudiosink enable-last-sample=false sync=false device=%d"
 ;
 
 
@@ -62,8 +63,8 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 /// Parse the launch string to construct the pipeline; obtain some references; and install a
 /// callback function for when pads are added to rtpbin.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-ReceiverPipeline::ReceiverPipeline(uint16_t basePort, const char* pictureParameters, void* pWindowHandle)
-	: PipelineBase(gst_parse_launch(PIPELINE_STRING, NULL))
+ReceiverPipeline::ReceiverPipeline(uint16_t basePort, const char* audioDeviceName, const char* pictureParameters, void* pWindowHandle)
+	: PipelineBase(CreatePipeline(audioDeviceName))
 	, m_pRtpBin(gst_bin_get_by_name(GST_BIN(Pipeline()), "rtpbin"))
 	, m_DisplayWindowHandle(pWindowHandle)
 {
@@ -116,4 +117,22 @@ ReceiverPipeline::~ReceiverPipeline()
 {
 	Nullify();
 	gst_object_unref(m_pRtpBin);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ReceiverPipeline::CreatePipeline()
+///
+/// Create the pipeline from the string, interpolating parameters.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+GstElement* ReceiverPipeline::CreatePipeline(const char* audioDeviceName)
+{
+	char* pipelineString = new char[sizeof(PIPELINE_STRING) + 2 * sizeof("-2147483648")];
+	int deviceIndex = SenderPipeline::GetAudioDeviceIndex(audioDeviceName);
+	assert(deviceIndex >= 0);
+	std::sprintf(pipelineString, PIPELINE_STRING, SenderPipeline::GetAudioDeviceSamplingRate(deviceIndex), deviceIndex);
+	GstElement* pipeline = gst_parse_launch(pipelineString, NULL);
+	assert(pipeline != NULL);
+	delete[] pipelineString;
+	return pipeline;
 }
