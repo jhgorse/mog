@@ -46,6 +46,18 @@ public:
 	};
 	
 	
+	/// Get the index of an audio device by name.
+	static int GetAudioDeviceIndex(const char* inputName);
+	
+	
+	/// Get the capabilities for an audio input device.
+	static const char* GetAudioDeviceCaps(int inputIndex);
+	
+	
+	/// Get the sampling rate of an audio input device.
+	static const int GetAudioDeviceSamplingRate(int inputIndex);
+	
+	
 	/// Constructor
 	SenderPipeline(const char* videoInputName, const char* audioInputName, ISenderParameterNotifySink* pNotifySink = NULL);
 	
@@ -104,14 +116,6 @@ private:
 	
 	/// Get the capabilities for a video input device.
 	static const char* GetVideoDeviceCaps(int inputIndex);
-	
-	
-	/// Get the index of an audio device by name.
-	static int GetAudioDeviceIndex(const char* inputName);
-	
-	
-	/// Get the capabilities for an audio input device.
-	static const char* GetAudioDeviceCaps(int inputIndex);
 	
 	
 	/// (Static) callback for pad caps property change
