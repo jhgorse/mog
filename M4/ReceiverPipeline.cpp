@@ -53,7 +53,7 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	"   rtpbin."
 	" ! rtpspeexdepay"
 	" ! speexdec"
-	" ! osxaudiosink enable-last-sample=false sync=false device=%d"
+	" ! osxaudiosink enable-last-sample=false sync=false"
 ;
 
 
@@ -63,8 +63,8 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 /// Parse the launch string to construct the pipeline; obtain some references; and install a
 /// callback function for when pads are added to rtpbin.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-ReceiverPipeline::ReceiverPipeline(uint16_t basePort, const char* audioDeviceName, const char* pictureParameters, void* pWindowHandle)
-	: PipelineBase(CreatePipeline(audioDeviceName))
+ReceiverPipeline::ReceiverPipeline(uint16_t basePort, const char* pictureParameters, void* pWindowHandle)
+	: PipelineBase(gst_parse_launch(PIPELINE_STRING, NULL))
 	, m_pRtpBin(gst_bin_get_by_name(GST_BIN(Pipeline()), "rtpbin"))
 	, m_DisplayWindowHandle(pWindowHandle)
 {
@@ -117,24 +117,4 @@ ReceiverPipeline::~ReceiverPipeline()
 {
 	Nullify();
 	gst_object_unref(m_pRtpBin);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// ReceiverPipeline::CreatePipeline()
-///
-/// Create the pipeline from the string, interpolating parameters.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-GstElement* ReceiverPipeline::CreatePipeline(const char* audioDeviceName)
-{
-	char* pipelineString = new char[sizeof(PIPELINE_STRING) + 2 * sizeof("-2147483648")];
-	int deviceIndex = SenderPipeline::GetAudioDeviceIndex(audioDeviceName);
-	assert(deviceIndex >= 0);
-	// TODO: This isn't technically correct -- each sender should distribute its own sampling rate as part of the params;
-	// however, for now, we'll assume they're all using the same sampling rate.
-	std::sprintf(pipelineString, PIPELINE_STRING, deviceIndex);
-	GstElement* pipeline = gst_parse_launch(pipelineString, NULL);
-	assert(pipeline != NULL);
-	delete[] pipelineString;
-	return pipeline;
 }
