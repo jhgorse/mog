@@ -35,7 +35,7 @@ class ReceiverPipeline : public PipelineBase
 {
 public:	
 	/// Constructor
-	ReceiverPipeline(uint16_t basePort, const char* pictureParameters, void* pWindowHandle);
+	ReceiverPipeline(uint16_t basePort, const char* audioDeviceName, const char* pictureParameters, void* pWindowHandle);
 	
 	
 	/// Destructor

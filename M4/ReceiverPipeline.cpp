@@ -53,9 +53,7 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	"   rtpbin."
 	" ! rtpspeexdepay"
 	" ! speexdec"
-	" ! audioresample"
-	" ! audioconvert"
-	" ! osxaudiosink enable-last-sample=false sync=false"
+	" ! osxaudiosink name=asink enable-last-sample=false sync=false"
 ;
 
 
@@ -65,7 +63,7 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 /// Parse the launch string to construct the pipeline; obtain some references; and install a
 /// callback function for when pads are added to rtpbin.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-ReceiverPipeline::ReceiverPipeline(uint16_t basePort, const char* pictureParameters, void* pWindowHandle)
+ReceiverPipeline::ReceiverPipeline(uint16_t basePort, const char* audioDeviceName, const char* pictureParameters, void* pWindowHandle)
 	: PipelineBase(gst_parse_launch(PIPELINE_STRING, NULL))
 	, m_pRtpBin(gst_bin_get_by_name(GST_BIN(Pipeline()), "rtpbin"))
 	, m_DisplayWindowHandle(pWindowHandle)
@@ -107,6 +105,17 @@ ReceiverPipeline::ReceiverPipeline(uint16_t basePort, const char* pictureParamet
 	assert(e != NULL);
 	gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(e), reinterpret_cast<guintptr>(pWindowHandle));
 	gst_object_unref(e);
+
+	// Check to see if the audio device is something other than "built in"
+	if (std::strncmp(audioDeviceName, "Built-in Mic", sizeof("Built-in Mic") - 1) != 0)
+	{
+		e = gst_bin_get_by_name(GST_BIN(Pipeline()), "asink");
+		assert(e != NULL);
+		int idx = SenderPipeline::GetAudioDeviceIndex(audioDeviceName);
+		assert(idx >= 0);
+		g_object_set(e, "device", idx, NULL);
+		gst_object_unref(e);
+	}
 }
 
 
