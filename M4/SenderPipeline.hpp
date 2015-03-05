@@ -54,10 +54,6 @@ public:
 	static const char* GetAudioDeviceCaps(int inputIndex);
 	
 	
-	/// Get the sampling rate of an audio input device.
-	static const int GetAudioDeviceSamplingRate(int inputIndex);
-	
-	
 	/// Constructor
 	SenderPipeline(const char* videoInputName, const char* audioInputName, ISenderParameterNotifySink* pNotifySink = NULL);
 	

@@ -219,28 +219,6 @@ const char* SenderPipeline::GetAudioDeviceCaps(int inputIndex)
 	result = new char[sizeof("audio/x-raw, format=(string)S-2147483648LE, layout=(string)interleaved, rate=(int)-2147483648, channels=(int)-2147483648")];
 	std::sprintf(result, "audio/x-raw, format=(string)S%d%cE, layout=(string)interleaved, rate=(int)%d, channels=(int)%d", bits, endian, rate, channels);
 #else
-	result = new char[sizeof("audio/x-raw, format=(string)S32LE, layout=(string)interleaved, rate=(int)-2147483648, channels=(int)1")];
-	std::sprintf(result, "audio/x-raw, format=(string)S32LE, layout=(string)interleaved, rate=(int)%d, channels=(int)1", GetAudioDeviceSamplingRate(inputIndex));
-#endif
-
-	return result;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/// SenderPipeline::GetAudioDeviceSamplingRate
-///
-/// Get the sampling rate for the audio device at the given index.
-///
-/// @param inputIndex  The index of the audio input.
-///
-/// @return  The sampling rate of the device.
-///////////////////////////////////////////////////////////////////////////////////////////////////
-const int SenderPipeline::GetAudioDeviceSamplingRate(int inputIndex)
-{
-	// This function is a bit of a temporary hack to go along with the function above that does not
-	// work properly.
-
 	// Get device name
 	AudioObjectPropertyAddress deviceNameAddress = {
 		kAudioDevicePropertyDeviceName,
@@ -252,14 +230,14 @@ const int SenderPipeline::GetAudioDeviceSamplingRate(int inputIndex)
 	char* deviceName = new char[propertySize];
 	assert(AudioObjectGetPropertyData(inputIndex, &deviceNameAddress, 0, NULL, &propertySize, deviceName) == noErr);
 
-	int ret = 0;
+	result = new char[sizeof("audio/x-raw, format=(string)S32LE, layout=(string)interleaved, rate=(int)-2147483648, channels=(int)1")];
 	if (std::strncmp(deviceName, "Built-in Mic", sizeof("Built-in Mic") - 1) == 0)
 	{
-		ret = 44100;
+		std::strcpy(result, "audio/x-raw, format=(string)S32LE, layout=(string)interleaved, rate=(int)44100, channels=(int)1");
 	}
 	else if (std::strncmp(deviceName, "Phnx MT202exe", sizeof("Phnx MT202exe") - 1) == 0)
 	{
-		ret = 32000;
+		std::strcpy(result, "audio/x-raw, format=(string)S32LE, layout=(string)interleaved, rate=(int)32000, channels=(int)1");
 	}
 	else
 	{
@@ -267,6 +245,7 @@ const int SenderPipeline::GetAudioDeviceSamplingRate(int inputIndex)
 		assert(false);
 	}
 	delete[] deviceName;
-	
-	return ret;
+#endif
+
+	return result;
 }

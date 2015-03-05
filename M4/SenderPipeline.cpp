@@ -234,6 +234,15 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
     gst_caps_unref(caps);
     
 	GstElement* audioconvert = gst_element_factory_make("audioconvert", NULL);
+
+	GstElement* audioresample = gst_element_factory_make("audioresample", NULL);
+
+	GstElement* capsfilter2 = gst_element_factory_make("capsfilter", NULL);
+	caps = gst_caps_from_string("audio/x-raw, format=(string)S32LE, layout=(string)interleaved, rate=(int)%d, channels=(int)1");
+	g_object_set(capsfilter2,
+		"caps", caps,
+		NULL);
+	gst_caps_unref(caps);
 	
 	GstElement* speexenc = gst_element_factory_make("speexenc", NULL);
 	g_object_set(G_OBJECT(speexenc),
@@ -255,8 +264,8 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 		"sync",               FALSE,
 		NULL);
     	
-	gst_bin_add_many(GST_BIN(pipeline), osxaudiosrc, srccapsfilter, audioconvert, speexenc, rtpspeexpay, asink, acsink, NULL);
-	assert(gst_element_link_many(osxaudiosrc, srccapsfilter, audioconvert, speexenc, rtpspeexpay, NULL));
+	gst_bin_add_many(GST_BIN(pipeline), osxaudiosrc, srccapsfilter, audioconvert, audioresample, capsfilter2, speexenc, rtpspeexpay, asink, acsink, NULL);
+	assert(gst_element_link_many(osxaudiosrc, srccapsfilter, audioconvert, audioresample, capsfilter2, speexenc, rtpspeexpay, NULL));
 	assert(gst_element_link_pads(rtpspeexpay, "src", rtpbin, "send_rtp_sink_1"));
 	assert(gst_element_link_pads(rtpbin, "send_rtp_src_1", asink, "sink"));
 	assert(gst_element_link_pads(rtpbin, "send_rtcp_src_1", acsink, "sink"));
