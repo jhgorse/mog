@@ -53,9 +53,8 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	"   rtpbin."
 	" ! rtpspeexdepay"
 	" ! speexdec"
-	" ! audioconvert"
-	" ! audioresample"
-	" ! osxaudiosink name=asink enable-last-sample=false sync=false"
+	" %s "
+	" ! osxaudiosink name=asink enable-last-sample=false sync=false %s"
 ;
 
 
@@ -66,7 +65,7 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 /// callback function for when pads are added to rtpbin.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ReceiverPipeline::ReceiverPipeline(uint16_t basePort, const char* audioDeviceName, const char* pictureParameters, void* pWindowHandle)
-	: PipelineBase(gst_parse_launch(PIPELINE_STRING, NULL))
+	: PipelineBase(CreatePipeline(audioDeviceName))
 	, m_pRtpBin(gst_bin_get_by_name(GST_BIN(Pipeline()), "rtpbin"))
 	, m_DisplayWindowHandle(pWindowHandle)
 {
@@ -107,17 +106,6 @@ ReceiverPipeline::ReceiverPipeline(uint16_t basePort, const char* audioDeviceNam
 	assert(e != NULL);
 	gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(e), reinterpret_cast<guintptr>(pWindowHandle));
 	gst_object_unref(e);
-
-	// Check to see if the audio device is something other than "built in"
-	if (std::strncmp(audioDeviceName, "Built-in Mic", sizeof("Built-in Mic") - 1) != 0)
-	{
-		e = gst_bin_get_by_name(GST_BIN(Pipeline()), "asink");
-		assert(e != NULL);
-		int idx = SenderPipeline::GetAudioDeviceIndex(audioDeviceName);
-		assert(idx >= 0);
-		g_object_set(e, "device", idx, NULL);
-		gst_object_unref(e);
-	}
 }
 
 
@@ -130,4 +118,37 @@ ReceiverPipeline::~ReceiverPipeline()
 {
 	Nullify();
 	gst_object_unref(m_pRtpBin);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// ReceiverPipeline::CreatePipeline
+///
+/// Creates a receiver pipeline using the given audio device name for audio playback. For use in
+/// constructor member initialization list.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+GstElement* ReceiverPipeline::CreatePipeline(const char* audioDeviceName)
+{
+	char* pipelineString;
+	if (std::strncmp(audioDeviceName, "Built-in Mic", sizeof("Built-in Mic") - 1) != 0)
+	{
+		// not built-in
+		int idx = SenderPipeline::GetAudioDeviceIndex(audioDeviceName);
+		assert(idx >= 0);
+		char deviceString[sizeof("device=-2147483648")];
+		std::sprintf(deviceString, "device=%d", idx);
+		pipelineString = new char[sizeof(PIPELINE_STRING) + sizeof("audioconvert ! audioresample") + sizeof("device=-2147483648")];
+		std::sprintf(pipelineString, PIPELINE_STRING, "audioconvert ! audioresample", deviceString);
+	}
+	else
+	{
+		// built-in
+		pipelineString = new char[sizeof(PIPELINE_STRING)];
+		std::sprintf(pipelineString, PIPELINE_STRING, "", "");
+	}
+	std::printf("Launching \"%s\"\n", pipelineString);
+	GstElement* ret = gst_parse_launch(pipelineString, NULL);
+	assert(ret != NULL);
+	delete[] pipelineString;
+	return ret;
 }
