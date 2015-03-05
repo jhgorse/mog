@@ -130,6 +130,8 @@ GstElement* ReceiverPipeline::CreatePipeline(const char* audioDeviceName)
 	char* pipelineString = new char[sizeof(PIPELINE_STRING) + 2 * sizeof("-2147483648")];
 	int deviceIndex = SenderPipeline::GetAudioDeviceIndex(audioDeviceName);
 	assert(deviceIndex >= 0);
+	// TODO: This isn't technically correct -- each sender should distribute its own sampling rate as part of the params;
+	// however, for now, we'll assume they're all using the same sampling rate.
 	std::sprintf(pipelineString, PIPELINE_STRING, SenderPipeline::GetAudioDeviceSamplingRate(deviceIndex), deviceIndex);
 	GstElement* pipeline = gst_parse_launch(pipelineString, NULL);
 	assert(pipeline != NULL);
