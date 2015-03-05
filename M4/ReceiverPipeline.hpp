@@ -54,6 +54,10 @@ private:
 	static const char PIPELINE_STRING[];
 
 
+	/// Create a pipeline (used in MIL)
+	static GstElement* CreatePipeline(const char* audioDeviceName);
+
+
 	/// Reference to rtpbin element
 	GstElement* const m_pRtpBin;
 	
