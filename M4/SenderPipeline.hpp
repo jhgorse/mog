@@ -50,10 +50,6 @@ public:
 	static int GetAudioDeviceIndex(const char* inputName);
 	
 	
-	/// Get the capabilities for an audio input device.
-	static const char* GetAudioDeviceCaps(int inputIndex);
-	
-	
 	/// Constructor
 	SenderPipeline(const char* videoInputName, const char* audioInputName, ISenderParameterNotifySink* pNotifySink = NULL);
 	
@@ -106,6 +102,10 @@ private:
 	static GstElement* BuildPipeline(const char* videoInputName, const char* audioInputName);
 	
 	
+	/// Get the capabilities for an audio input device.
+	static const char* GetAudioDeviceCaps(int inputIndex);
+
+
 	/// Get the index of a video device by name.
 	static int GetVideoDeviceIndex(const char* inputName);
 	
