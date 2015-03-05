@@ -38,7 +38,7 @@ const char ReceiverPipeline::PIPELINE_STRING[] =
 	" ! application/x-rtcp"
 	" ! rtpbin.recv_rtcp_sink_0"
 	"   udpsrc name=asrc"
-	" ! application/x-rtp,media=audio,clock-rate=%d,encoding-name=SPEEX,encoding-params=1,channels=1,payload=96"
+	" ! application/x-rtp,media=audio,clock-rate=32000,encoding-name=SPEEX,encoding-params=1,channels=1,payload=96"
 	" ! rtpbin.recv_rtp_sink_1"
 	"   udpsrc name=acsrc"
 	" ! application/x-rtcp"
@@ -132,7 +132,7 @@ GstElement* ReceiverPipeline::CreatePipeline(const char* audioDeviceName)
 	assert(deviceIndex >= 0);
 	// TODO: This isn't technically correct -- each sender should distribute its own sampling rate as part of the params;
 	// however, for now, we'll assume they're all using the same sampling rate.
-	std::sprintf(pipelineString, PIPELINE_STRING, SenderPipeline::GetAudioDeviceSamplingRate(deviceIndex), deviceIndex);
+	std::sprintf(pipelineString, PIPELINE_STRING, deviceIndex);
 	GstElement* pipeline = gst_parse_launch(pipelineString, NULL);
 	assert(pipeline != NULL);
 	delete[] pipelineString;
