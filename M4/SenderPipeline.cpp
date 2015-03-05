@@ -235,11 +235,12 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
     
 	GstElement* audioconvert = gst_element_factory_make("audioconvert", NULL);
 	
-	GstElement* rtpL16pay = gst_element_factory_make("rtpL16pay", NULL);
-    g_object_set(rtpL16pay,
-    	"buffer-list", TRUE,
-		"mtu",         8900,
-    	NULL);
+	GstElement* speexenc = gst_element_factory_make("speexenc", NULL);
+	g_object_set(G_OBJECT(speexenc),
+		"vad", TRUE,
+		NULL);
+
+	GstElement* rtpspeexpay = gst_element_factory_make("rtpspeexpay", NULL);
     
 	GstElement* asink = gst_element_factory_make("multiudpsink", "asink");
 	g_object_set(G_OBJECT(asink),
@@ -254,9 +255,9 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 		"sync",               FALSE,
 		NULL);
     	
-	gst_bin_add_many(GST_BIN(pipeline), osxaudiosrc, srccapsfilter, audioconvert, rtpL16pay, asink, acsink, NULL);
-	assert(gst_element_link_many(osxaudiosrc, srccapsfilter, audioconvert, rtpL16pay, NULL));
-	assert(gst_element_link_pads(rtpL16pay, "src", rtpbin, "send_rtp_sink_1"));
+	gst_bin_add_many(GST_BIN(pipeline), osxaudiosrc, srccapsfilter, audioconvert, speexenc, rtpspeexpay, asink, acsink, NULL);
+	assert(gst_element_link_many(osxaudiosrc, srccapsfilter, audioconvert, speexenc, rtpspeexpay, NULL));
+	assert(gst_element_link_pads(rtpspeexpay, "src", rtpbin, "send_rtp_sink_1"));
 	assert(gst_element_link_pads(rtpbin, "send_rtp_src_1", asink, "sink"));
 	assert(gst_element_link_pads(rtpbin, "send_rtcp_src_1", acsink, "sink"));
 
