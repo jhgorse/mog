@@ -148,7 +148,6 @@ GstElement* ReceiverPipeline::CreatePipeline(const char* audioDeviceName)
 		pipelineString = new char[sizeof(PIPELINE_STRING) + sizeof("audioconvert ! audioresample")];
 		std::sprintf(pipelineString, PIPELINE_STRING, " ! audioconvert ! audioresample", "");
 	}
-	std::printf("Launching \"%s\"\n", pipelineString);
 	GstElement* ret = gst_parse_launch(pipelineString, NULL);
 	assert(ret != NULL);
 	delete[] pipelineString;
