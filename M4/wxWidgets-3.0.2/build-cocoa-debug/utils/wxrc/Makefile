@@ -17,11 +17,11 @@ SETFILE = SetFile
 STRIP = strip
 INSTALL_PROGRAM = cp -fp
 INSTALL_DIR = mkdir -p
-BK_DEPS = /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/bk-deps
+BK_DEPS = /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/bk-deps
 srcdir = ../../../utils/wxrc
 top_srcdir = ../../..
 bindir = ${exec_prefix}/bin
-LIBS = -lz -lpthread -lc++ -llzma
+LIBS = -lz -lpthread -lc++
 CXX = g++ -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk -mmacosx-version-min=10.7
 CXXFLAGS = -DWX_PRECOMP -O2 -fno-strict-aliasing -std=c++0x -stdlib=libc++ -fno-common 
 CPPFLAGS = -D_FILE_OFFSET_BITS=64 -I${wx_top_builddir}/lib/wx/include/osx_cocoa-unicode-static-3.0 -I${top_srcdir}/include -stdlib=libc++
@@ -30,12 +30,12 @@ WX_LIB_FLAVOUR =
 TOOLKIT = OSX_COCOA
 TOOLKIT_LOWERCASE = osx_cocoa
 TOOLKIT_VERSION = 
-EXTRALIBS =   -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL  -lz -lpthread -lc++ -llzma 
+EXTRALIBS =   -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL  -lz -lpthread -lc++ 
 EXTRALIBS_XML =  -lexpat
-EXTRALIBS_GUI = -framework WebKit
+EXTRALIBS_GUI = 
 CXXWARNINGS = -Wall -Wundef -Wunused-parameter -Wno-ctor-dtor-privacy -Woverloaded-virtual -Wno-deprecated-declarations
 HOST_SUFFIX = 
-wx_top_builddir = /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug
+wx_top_builddir = /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug
 
 ### Variables: ###
 

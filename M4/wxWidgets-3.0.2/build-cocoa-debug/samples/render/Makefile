@@ -11,7 +11,7 @@ prefix = /usr/local
 exec_prefix = ${prefix}
 datarootdir = ${prefix}/share
 INSTALL = /usr/bin/install -c
-SHARED_LD_MODULE_CXX = CXX="$(CXX)" /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/shared-ld-sh -bundle -headerpad_max_install_names -o
+SHARED_LD_MODULE_CXX = CXX="$(CXX)" /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/shared-ld-sh -bundle -headerpad_max_install_names -o
 SO_SUFFIX_MODULE = bundle
 EXEEXT = 
 WINDRES = 
@@ -21,12 +21,12 @@ STRIP = strip
 NM = nm
 INSTALL_PROGRAM = cp -fp
 INSTALL_DIR = mkdir -p
-BK_DEPS = /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/bk-deps
+BK_DEPS = /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/bk-deps
 srcdir = ../../../samples/render
 top_srcdir = ../../..
 libdir = ${exec_prefix}/lib
 DLLPREFIX_MODULE = 
-LIBS = -lz -lpthread -lc++ -llzma
+LIBS = -lz -lpthread -lc++
 LDFLAGS_GUI = 
 CXX = g++ -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk -mmacosx-version-min=10.7
 CXXFLAGS = -DWX_PRECOMP -O2 -fno-strict-aliasing -std=c++0x -stdlib=libc++ -fno-common 
@@ -37,13 +37,13 @@ TOOLKIT = OSX_COCOA
 TOOLKIT_LOWERCASE = osx_cocoa
 TOOLKIT_VERSION = 
 TOOLCHAIN_FULLNAME = osx_cocoa-unicode-static-3.0
-EXTRALIBS =   -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL  -lz -lpthread -lc++ -llzma 
+EXTRALIBS =   -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL  -lz -lpthread -lc++ 
 EXTRALIBS_XML =  -lexpat
-EXTRALIBS_GUI = -framework WebKit
+EXTRALIBS_GUI = 
 CXXWARNINGS = -Wall -Wundef -Wunused-parameter -Wno-ctor-dtor-privacy -Woverloaded-virtual -Wno-deprecated-declarations
 HOST_SUFFIX = 
 SAMPLES_RPATH_FLAG = 
-wx_top_builddir = /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug
+wx_top_builddir = /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug
 
 ### Variables: ###
 

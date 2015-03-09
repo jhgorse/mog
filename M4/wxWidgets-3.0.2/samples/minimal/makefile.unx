@@ -14,10 +14,10 @@
 CXX = `$(WX_CONFIG) --cxx`
 
 # Standard flags for C++ 
-CXXFLAGS ?= 
+CXXFLAGS ?=-stdlib=libc++ 
 
 # Standard preprocessor flags (common for CC and CXX) 
-CPPFLAGS ?= 
+CPPFLAGS ?=-stdlib=libc++ 
 
 # Standard linker flags 
 LDFLAGS ?= 

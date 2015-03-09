@@ -77,7 +77,7 @@ usage()
   of  libs that should be linked to, but only if they are available.
 
   Available libraries in this build are:
-  xrc webview stc richtext ribbon propgrid aui gl html qa adv core xml net base
+  xrc stc richtext ribbon propgrid aui gl html qa adv core xml net base
 
 EOF
 
@@ -1025,8 +1025,8 @@ fi
 # Additional configuration for individual library components.
 ldflags_gl=""
 
-ldlibs_base="-lwxregexu-3.0 -lwxtiff-3.0 -lwxjpeg-3.0 -lwxpng-3.0 -lz -lpthread -lc++ -llzma"
-ldlibs_core="-framework WebKit"
+ldlibs_base="-lwxregexu-3.0 -lwxtiff-3.0 -lwxjpeg-3.0 -lwxpng-3.0 -lz -lpthread -lc++"
+ldlibs_core=""
 ldlibs_gl="-framework OpenGL -framework AGL"
 ldlibs_html=""
 ldlibs_xml=" -lexpat"
@@ -1187,7 +1187,7 @@ wx_optional_libs=`echo "$optional_libs_parameters" | tr ',' ' '`
 
 # Add the --optional-libs, if they've been compiled and aren't already added
 for i in $wx_optional_libs; do
-    if match_field $i xrc webview stc richtext ribbon propgrid aui gl html qa adv core xml net base; then
+    if match_field $i xrc stc richtext ribbon propgrid aui gl html qa adv core xml net base; then
         if not match_field $i $wx_libs; then
             wx_libs="${wx_libs:+$wx_libs }$i"
         fi
@@ -1225,14 +1225,14 @@ else    # MONOLITHIC = 0
 
     # Import core libs by default, expand std if specified, or add base if omitted.
     if [ -n "$output_option_libs" ] && [ -z "$libs_parameters" ]; then
-        wx_libs="xrc webview html qa adv core xml net base"
+        wx_libs="xrc html qa adv core xml net base"
     elif match_field all $wx_libs; then
-        wx_libs="xrc webview stc richtext ribbon propgrid aui gl html qa adv core xml net base"
+        wx_libs="xrc stc richtext ribbon propgrid aui gl html qa adv core xml net base"
     elif match_field std $wx_libs; then
         # Bubble any libs that were already specified to the end
         # of the list and ensure static linking order is retained.
         wx_libs=`remove_field std $wx_libs`
-        for i in xrc webview html qa adv core xml net base; do
+        for i in xrc html qa adv core xml net base; do
             wx_libs="`remove_field $i $wx_libs` $i"
         done
     elif not match_field base $wx_libs ; then
@@ -1245,7 +1245,7 @@ else    # MONOLITHIC = 0
     if [ -n "$output_option_libs" ]; then
         using_gui=no
         for i in $wx_libs ; do
-            if match_field "$i" xrc webview html qa adv core; then
+            if match_field "$i" xrc html qa adv core; then
                 _guildflags=""
                 using_gui=yes
                 break

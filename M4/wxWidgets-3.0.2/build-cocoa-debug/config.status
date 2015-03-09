@@ -393,7 +393,7 @@ on `(hostname || uname -n) 2>/dev/null | sed 1q`
 "
 
 # Files that config.status was made for.
-config_files=" lib/wx/config/osx_cocoa-unicode-static-3.0:wx-config.in lib/wx/config/inplace-osx_cocoa-unicode-static-3.0:wx-config-inplace.in utils/ifacecheck/rungccxml.sh Makefile samples/xrc/Makefile samples/wrapsizer/Makefile samples/wizard/Makefile samples/widgets/Makefile samples/webview/Makefile samples/vscroll/Makefile samples/validate/Makefile samples/uiaction/Makefile samples/typetest/Makefile samples/treelist/Makefile samples/treectrl/Makefile samples/toolbar/Makefile samples/thread/Makefile samples/text/Makefile samples/taskbar/Makefile samples/taborder/Makefile samples/svg/Makefile samples/stc/Makefile samples/statbar/Makefile samples/splitter/Makefile samples/splash/Makefile samples/sound/Makefile samples/sockets/Makefile samples/shaped/Makefile samples/scroll/Makefile samples/sashtest/Makefile samples/richtext/Makefile samples/ribbon/Makefile samples/render/Makefile samples/propgrid/Makefile samples/printing/Makefile samples/popup/Makefile samples/opengl/penguin/Makefile samples/opengl/isosurf/Makefile samples/opengl/cube/Makefile samples/opengl/Makefile samples/notebook/Makefile samples/minimal/Makefile samples/menu/Makefile samples/mediaplayer/Makefile samples/mdi/Makefile samples/listctrl/Makefile samples/layout/Makefile samples/keyboard/Makefile samples/joytest/Makefile samples/ipc/Makefile samples/internat/Makefile samples/image/Makefile samples/html/zip/Makefile samples/html/widget/Makefile samples/html/virtual/Makefile samples/html/test/Makefile samples/html/printing/Makefile samples/html/htmlctrl/Makefile samples/html/helpview/Makefile samples/html/help/Makefile samples/html/about/Makefile samples/html/Makefile samples/htlbox/Makefile samples/help/Makefile samples/grid/Makefile samples/fswatcher/Makefile samples/font/Makefile samples/exec/Makefile samples/except/Makefile samples/event/Makefile samples/erase/Makefile samples/drawing/Makefile samples/dragimag/Makefile samples/docview/Makefile samples/dnd/Makefile samples/display/Makefile samples/dialogs/Makefile samples/debugrpt/Makefile samples/dataview/Makefile samples/controls/Makefile samples/config/Makefile samples/combo/Makefile samples/collpane/Makefile samples/clipboard/Makefile samples/caret/Makefile samples/calendar/Makefile samples/aui/Makefile samples/artprov/Makefile samples/animate/Makefile samples/Makefile demos/bombs/Makefile demos/forty/Makefile demos/fractal/Makefile demos/life/Makefile demos/Makefile demos/poem/Makefile utils/emulator/Makefile utils/emulator/src/Makefile utils/execmon/Makefile utils/helpview/Makefile utils/helpview/src/Makefile utils/hhp2cached/Makefile utils/ifacecheck/src/Makefile utils/Makefile utils/screenshotgen/Makefile utils/screenshotgen/src/Makefile utils/wxrc/Makefile tests/benchmarks/Makefile tests/Makefile"
+config_files=" lib/wx/config/osx_cocoa-unicode-static-3.0:wx-config.in lib/wx/config/inplace-osx_cocoa-unicode-static-3.0:wx-config-inplace.in utils/ifacecheck/rungccxml.sh Makefile samples/xrc/Makefile samples/wrapsizer/Makefile samples/wizard/Makefile samples/widgets/Makefile samples/vscroll/Makefile samples/validate/Makefile samples/uiaction/Makefile samples/typetest/Makefile samples/treelist/Makefile samples/treectrl/Makefile samples/toolbar/Makefile samples/thread/Makefile samples/text/Makefile samples/taskbar/Makefile samples/taborder/Makefile samples/svg/Makefile samples/stc/Makefile samples/statbar/Makefile samples/splitter/Makefile samples/splash/Makefile samples/sound/Makefile samples/sockets/Makefile samples/shaped/Makefile samples/scroll/Makefile samples/sashtest/Makefile samples/richtext/Makefile samples/ribbon/Makefile samples/render/Makefile samples/propgrid/Makefile samples/printing/Makefile samples/popup/Makefile samples/opengl/penguin/Makefile samples/opengl/isosurf/Makefile samples/opengl/cube/Makefile samples/opengl/Makefile samples/notebook/Makefile samples/minimal/Makefile samples/menu/Makefile samples/mediaplayer/Makefile samples/mdi/Makefile samples/listctrl/Makefile samples/layout/Makefile samples/keyboard/Makefile samples/joytest/Makefile samples/ipc/Makefile samples/internat/Makefile samples/image/Makefile samples/html/zip/Makefile samples/html/widget/Makefile samples/html/virtual/Makefile samples/html/test/Makefile samples/html/printing/Makefile samples/html/helpview/Makefile samples/html/help/Makefile samples/html/about/Makefile samples/html/Makefile samples/htlbox/Makefile samples/help/Makefile samples/grid/Makefile samples/fswatcher/Makefile samples/font/Makefile samples/exec/Makefile samples/except/Makefile samples/event/Makefile samples/erase/Makefile samples/drawing/Makefile samples/dragimag/Makefile samples/docview/Makefile samples/dnd/Makefile samples/display/Makefile samples/dialogs/Makefile samples/debugrpt/Makefile samples/dataview/Makefile samples/controls/Makefile samples/config/Makefile samples/combo/Makefile samples/collpane/Makefile samples/clipboard/Makefile samples/caret/Makefile samples/calendar/Makefile samples/aui/Makefile samples/artprov/Makefile samples/animate/Makefile samples/Makefile demos/bombs/Makefile demos/forty/Makefile demos/fractal/Makefile demos/life/Makefile demos/Makefile demos/poem/Makefile utils/emulator/Makefile utils/emulator/src/Makefile utils/execmon/Makefile utils/helpview/Makefile utils/helpview/src/Makefile utils/hhp2cached/Makefile utils/ifacecheck/src/Makefile utils/Makefile utils/screenshotgen/Makefile utils/screenshotgen/src/Makefile utils/wxrc/Makefile"
 config_headers=" lib/wx/include/osx_cocoa-unicode-static-3.0/wx/setup.h:setup.h.in"
 config_commands=" wx-config"
 
@@ -427,7 +427,7 @@ $config_commands
 
 Report bugs to <wx-dev@lists.wxwidgets.org>."
 
-ac_cs_config="'--disable-shared' '--enable-monolithic' '--enable-unicode' '--with-cocoa' '--without-libiconv' '--enable-any' '--with-macosx-version-min=10.7' '--with-macosx-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk' 'CXXFLAGS=-std=c++0x -stdlib=libc++' 'CPPFLAGS=-stdlib=libc++' 'LIBS=-lc++'"
+ac_cs_config="'--disable-shared' '--enable-monolithic' '--enable-unicode' '--with-cocoa' '--without-libiconv' '--enable-any' '--with-macosx-version-min=10.7' '--with-macosx-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk' 'CXXFLAGS=-std=c++0x -stdlib=libc++' 'CPPFLAGS=-stdlib=libc++' 'LIBS=-lc++' '--without-liblzma' '--disable-webkit' '--disable-webviewwebkit' '--with-expat' --disable-lzma"
 ac_cs_version="\
 wxWidgets config.status 3.0.2
 configured by ../configure, generated by GNU Autoconf 2.69,
@@ -437,7 +437,7 @@ Copyright (C) 2012 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug'
+ac_pwd='/Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug'
 srcdir='..'
 INSTALL='/usr/bin/install -c'
 test -n "$AWK" || AWK=awk
@@ -517,7 +517,7 @@ if $ac_cs_silent; then
 fi
 
 if $ac_cs_recheck; then
-  set X /bin/sh '../configure'  '--disable-shared' '--enable-monolithic' '--enable-unicode' '--with-cocoa' '--without-libiconv' '--enable-any' '--with-macosx-version-min=10.7' '--with-macosx-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk' 'CXXFLAGS=-std=c++0x -stdlib=libc++' 'CPPFLAGS=-stdlib=libc++' 'LIBS=-lc++' $ac_configure_extra_args --no-create --no-recursion
+  set X /bin/sh '../configure'  '--disable-shared' '--enable-monolithic' '--enable-unicode' '--with-cocoa' '--without-libiconv' '--enable-any' '--with-macosx-version-min=10.7' '--with-macosx-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk' 'CXXFLAGS=-std=c++0x -stdlib=libc++' 'CPPFLAGS=-stdlib=libc++' 'LIBS=-lc++' '--without-liblzma' '--disable-webkit' '--disable-webviewwebkit' '--with-expat' --disable-lzma $ac_configure_extra_args --no-create --no-recursion
   shift
   $as_echo "running CONFIG_SHELL=/bin/sh $*" >&6
   CONFIG_SHELL='/bin/sh'
@@ -630,7 +630,7 @@ echo 'BEGIN {' >"$ac_tmp/subs1.awk" &&
 cat >>"$ac_tmp/subs1.awk" <<\_ACAWK &&
 S["LTLIBOBJS"]=""
 S["LIBOBJS"]=""
-S["CPPUNIT_CONFIG"]="/opt/local/bin/cppunit-config"
+S["CPPUNIT_CONFIG"]="no"
 S["DLLTOOL"]=""
 S["GCC"]="yes"
 S["MACSETFILE"]="$(SETFILE)"
@@ -644,17 +644,17 @@ S["DMALLOC_LIBS"]=""
 S["OPENGL_LIBS"]="-framework OpenGL -framework AGL"
 S["LDFLAGS_GL"]=""
 S["SAMPLES_SUBDIRS"]="animate artprov aui calendar caret clipboard collpane combo config controls dataview debugrpt dialogs display dnd docview dragimag drawing erase eve"\
-"nt except exec font fswatcher grid help htlbox html html/about html/help html/helpview html/htmlctrl html/printing html/test html/virtual html/widge"\
-"t html/zip image internat ipc joytest keyboard layout listctrl mdi mediaplayer menu minimal notebook opengl opengl/cube opengl/isosurf opengl/pengui"\
-"n popup prefseditor printing propgrid render ribbon richtext sashtest scroll shaped sockets sound splash splitter statbar stc svg taborder taskbar t"\
-"ext thread toolbar treectrl treelist typetest uiaction validate vscroll webview widgets wizard wrapsizer xrc "
+"nt except exec font fswatcher grid help htlbox html html/about html/help html/helpview html/printing html/test html/virtual html/widget html/zip ima"\
+"ge internat ipc joytest keyboard layout listctrl mdi mediaplayer menu minimal notebook opengl opengl/cube opengl/isosurf opengl/penguin popup prefse"\
+"ditor printing propgrid render ribbon richtext sashtest scroll shaped sockets sound splash splitter statbar stc svg taborder taskbar text thread too"\
+"lbar treectrl treelist typetest uiaction validate vscroll widgets wizard wrapsizer xrc "
 S["DISTDIR"]="wx$(TOOLKIT)"
 S["GUIDIST"]="OSX_COCOA_DIST SAMPLES_DIST DEMOS_DIST UTILS_DIST MISC_DIST INTL_DIST"
 S["WXCONFIG_RESFLAGS"]="-d __DARWIN__ -t APPL $libdir/libwx_osx_cocoau-3.0.2.r"
 S["WXCONFIG_LDFLAGS_GUI"]=""
 S["WXCONFIG_LDFLAGS"]="  -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL"
 S["WXCONFIG_RPATH"]=""
-S["WXCONFIG_LIBS"]="-lwxregexu-3.0 -lwxtiff-3.0 -lwxjpeg-3.0 -lwxpng-3.0 -lz -lpthread -lc++ -llzma"
+S["WXCONFIG_LIBS"]="-lwxregexu-3.0 -lwxtiff-3.0 -lwxjpeg-3.0 -lwxpng-3.0 -lz -lpthread -lc++"
 S["WXCONFIG_CXXFLAGS"]=""
 S["WXCONFIG_CFLAGS"]=""
 S["WXCONFIG_CPPFLAGS"]="-D_FILE_OFFSET_BITS=64  -D__WXMAC__ -D__WXOSX__ -D__WXOSX_COCOA__"
@@ -864,7 +864,7 @@ S["COND_BUILD_release_DEBUG_INFO_default"]="#"
 S["COND_BUILD_release"]="#"
 S["COND_BUILD_debug_DEBUG_INFO_default"]="#"
 S["COND_BUILD_debug"]="#"
-S["BK_MAKE_PCH"]="/Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/bk-make-pch"
+S["BK_MAKE_PCH"]="/Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/bk-make-pch"
 S["ICC_PCH_USE_SWITCH"]=""
 S["ICC_PCH_CREATE_SWITCH"]=""
 S["ICC_PCH"]="0"
@@ -873,7 +873,7 @@ S["OBJCXXFLAGS"]="-O2 -fno-strict-aliasing "
 S["SETFILE"]="SetFile"
 S["REZ"]="Rez"
 S["WINDRES"]=""
-S["BK_DEPS"]="/Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/bk-deps"
+S["BK_DEPS"]="/Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/bk-deps"
 S["DEPS_TRACKING"]="1"
 S["SONAME_FLAG"]=""
 S["USE_SOTWOSYMLINKS"]="1"
@@ -884,10 +884,8 @@ S["USE_SOVERLINUX"]="0"
 S["USE_SOVERSION"]="1"
 S["WINDOWS_IMPLIB"]="0"
 S["PIC_FLAG"]="-dynamic -fPIC -DPIC"
-S["SHARED_LD_MODULE_CXX"]="CXX=\"$(CXX)\" /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/shared-ld-sh -bundle -headerpa"\
-"d_max_install_names -o"
-S["SHARED_LD_MODULE_CC"]="/Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/shared-ld-sh -bundle -headerpad_max_install"\
-"_names -o"
+S["SHARED_LD_MODULE_CXX"]="CXX=\"$(CXX)\" /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/shared-ld-sh -bundle -headerpad_max_install_names -o"
+S["SHARED_LD_MODULE_CC"]="/Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/shared-ld-sh -bundle -headerpad_max_install_names -o"
 S["SHARED_LD_CXX"]="${CXX} -dynamiclib -single_module -headerpad_max_install_names -o"
 S["SHARED_LD_CC"]="${CC} -dynamiclib -single_module -headerpad_max_install_names -o"
 S["AIX_CXX_LD"]=""
@@ -920,8 +918,8 @@ S["INSTALL_DATA"]="cp -fp"
 S["INSTALL_SCRIPT"]="${INSTALL}"
 S["INSTALL_PROGRAM"]="cp -fp"
 S["RANLIB"]="ranlib"
-S["CPPUNIT_LIBS"]="-L/opt/local/lib -lcppunit -ldl"
-S["CPPUNIT_CFLAGS"]="-I/opt/local/include"
+S["CPPUNIT_LIBS"]=""
+S["CPPUNIT_CFLAGS"]=""
 S["HOST_SUFFIX"]=""
 S["HEADER_PAD_OPTION"]=""
 S["SAMPLES_RPATH_FLAG"]=""
@@ -936,11 +934,11 @@ S["WITH_PLUGIN_SDL"]="0"
 S["EXTRALIBS_STC"]="-lwxscintilla-3.0"
 S["EXTRALIBS_SDL"]=""
 S["EXTRALIBS_OPENGL"]=" -framework OpenGL -framework AGL"
-S["EXTRALIBS_GUI"]="-framework WebKit"
+S["EXTRALIBS_GUI"]=""
 S["EXTRALIBS_MEDIA"]="-framework QTKit"
 S["EXTRALIBS_HTML"]=""
 S["EXTRALIBS_XML"]=" -lexpat"
-S["EXTRALIBS"]="  -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL  -lz -lpthread -lc++ -llzma "
+S["EXTRALIBS"]="  -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL  -lz -lpthread -lc++ "
 S["CXXWARNINGS"]="-Wall -Wundef -Wunused-parameter -Wno-ctor-dtor-privacy -Woverloaded-virtual -Wno-deprecated-declarations"
 S["USE_PLUGINS"]="0"
 S["MONOLITHIC"]="1"
@@ -948,16 +946,16 @@ S["WXUNIV"]="0"
 S["WX_LIB_FLAVOUR"]=""
 S["WX_FLAVOUR"]=""
 S["OFFICIAL_BUILD"]="0"
-S["VENDOR"]="custom"
+S["VENDOR"]="apple"
 S["wxUSE_LIBTIFF"]="builtin"
 S["wxUSE_LIBPNG"]="builtin"
 S["wxUSE_LIBJPEG"]="builtin"
 S["wxUSE_EXPAT"]="sys"
 S["wxUSE_REGEX"]="builtin"
 S["wxUSE_ZLIB"]="sys"
-S["STD_GUI_LIBS"]="xrc webview html qa adv core"
+S["STD_GUI_LIBS"]="xrc html qa adv core"
 S["STD_BASE_LIBS"]="xml net base"
-S["BUILT_WX_LIBS"]="xrc webview stc richtext ribbon propgrid aui gl html qa adv core xml net base"
+S["BUILT_WX_LIBS"]="xrc stc richtext ribbon propgrid aui gl html qa adv core xml net base"
 S["ALL_WX_LIBS"]="xrc stc gl media qa html adv core xml net base"
 S["GST_LIBS"]="-framework QTKit"
 S["GST_CFLAGS"]=""
@@ -1027,19 +1025,19 @@ S["CPPFLAGS"]="-D_FILE_OFFSET_BITS=64 -I${wx_top_builddir}/lib/wx/include/osx_co
 S["LDFLAGS"]="  -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL "
 S["CFLAGS"]="-Wall -Wundef -O2 -fno-strict-aliasing -fno-common "
 S["CC"]="gcc -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk -mmacosx-version-min=10.7"
-S["wx_top_builddir"]="/Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug"
-S["host_os"]="darwin14.0.0"
+S["wx_top_builddir"]="/Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug"
+S["host_os"]="darwin14.1.0"
 S["host_vendor"]="apple"
 S["host_cpu"]="x86_64"
-S["host"]="x86_64-apple-darwin14.0.0"
-S["build_os"]="darwin14.0.0"
+S["host"]="x86_64-apple-darwin14.1.0"
+S["build_os"]="darwin14.1.0"
 S["build_vendor"]="apple"
 S["build_cpu"]="x86_64"
-S["build"]="x86_64-apple-darwin14.0.0"
+S["build"]="x86_64-apple-darwin14.1.0"
 S["target_alias"]=""
 S["host_alias"]=""
 S["build_alias"]=""
-S["LIBS"]="-lz -lpthread -lc++ -llzma"
+S["LIBS"]="-lz -lpthread -lc++"
 S["ECHO_T"]=""
 S["ECHO_N"]=""
 S["ECHO_C"]="\\c"
@@ -1403,7 +1401,6 @@ D["wxUSE_ARTPROVIDER_TANGO"]=" 1"
 D["wxUSE_DRAGIMAGE"]=" 1"
 D["wxUSE_EXCEPTIONS"]=" 1"
 D["wxUSE_HTML"]=" 1"
-D["wxUSE_WEBKIT"]=" 1"
 D["wxUSE_XRC"]=" 1"
 D["wxUSE_AUI"]=" 1"
 D["wxUSE_PROPGRID"]=" 1"
@@ -1418,8 +1415,6 @@ D["wxUSE_TASKBARICON_BALLOONS"]=" 1"
 D["wxUSE_VALIDATORS"]=" 1"
 D["wxUSE_PALETTE"]=" 1"
 D["wxUSE_RICHTEXT"]=" 1"
-D["wxUSE_WEBVIEW_WEBKIT"]=" 1"
-D["wxUSE_WEBVIEW"]=" 1"
 D["wxUSE_IMAGE"]=" 1"
 D["wxUSE_GIF"]=" 1"
 D["wxUSE_PCX"]=" 1"
@@ -1444,7 +1439,7 @@ D["wxUSE_TEXTDLG"]=" 1"
 D["wxUSE_WIZARDDLG"]=" 1"
 D["wxUSE_GRAPHICS_CONTEXT"]=" 1"
 D["wxUSE_MEDIACTRL"]=" 1"
-D["WXWIN_OS_DESCRIPTION"]=" \"Darwin 14.0.0 x86_64\""
+D["WXWIN_OS_DESCRIPTION"]=" \"Darwin 14.1.0 x86_64\""
 D["wxINSTALL_PREFIX"]=" \"/usr/local\""
   for (key in D) D_is_set[key] = 1
   FS = ""

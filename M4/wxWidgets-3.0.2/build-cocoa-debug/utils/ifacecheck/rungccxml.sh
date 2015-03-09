@@ -49,7 +49,7 @@ for f in $headerlist; do
 done
 
 # filter the configure flags to pass to gccxml
-wx_top_builddir="/Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug"
+wx_top_builddir="/Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug"
 top_srcdir="../../.."
 flags="-D_FILE_OFFSET_BITS=64 -I${wx_top_builddir}/lib/wx/include/osx_cocoa-unicode-static-3.0 -I${top_srcdir}/include -stdlib=libc++ -DWX_PRECOMP -O2 -fno-strict-aliasing -std=c++0x -stdlib=libc++ -fno-common "
 
