@@ -38,13 +38,17 @@ public:
 	inline void* GetMediaPanelHandle() const { return m_MediaPanel->GetHandle(); }
 	
 	
+  /// The inner video panel.
+  wxPanel* const m_MediaPanel;
+  
+  // Handle mouse clicks
+  void OnClick(wxMouseEvent& event);
+  
 private:
 	/// The default size.
 	static const wxSize DEFAULT_MEDIA_PANEL_SIZE;
 	
 	
-	/// The inner video panel.
-	wxPanel* const m_MediaPanel;
 };
 
 #endif // __VIDEOPANEL_HPP__

@@ -53,7 +53,9 @@ public:
 	
 	/// Called when the application is idle.
 	void OnIdle(wxIdleEvent& evt);
-	
+  
+  // Handle mouse clicks
+  void OnClick(wxMouseEvent& event);
 	
 protected:
 	/// Called by the sender pipeline when the sender-side parameters are available.
@@ -140,6 +142,19 @@ private:
 	
 	/// The sender pipeline. Not created until the GUI's main thread is started up.
 	SenderPipeline* m_pSenderPipeline;
+  
+  /// The View, which consists of
+  // 3 sizers for M4Frame,
+  wxBoxSizer* v;
+  wxBoxSizer* h1;
+  wxBoxSizer* h2;
+  
+  // Id of the selected m_MediaPanel,
+  int selectedMediaPanelId;
+  
+  // and a method for populating those sizers dynamically.
+  void SetView(int mediaPanelId);
+  
 };
 
 #endif // __M4FRAME_HPP__
