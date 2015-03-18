@@ -39,7 +39,7 @@ VideoPanel::VideoPanel(wxFrame* parent, const wxString &participantName)
 	wxString label = participantName.Clone();
 	label << ":";
 	wxStaticText* text = new wxStaticText(this, wxID_ANY, label, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE_HORIZONTAL);
-	s->Add(text, 0, wxALIGN_TOP | wxALIGN_CENTER_HORIZONTAL);
-	s->Add(m_MediaPanel, 1, wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER_HORIZONTAL | wxSHAPED);
+	s->Add(text, 0, wxALIGN_BOTTOM | wxALIGN_CENTER_HORIZONTAL);
+	s->Add(m_MediaPanel, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER_HORIZONTAL | wxSHAPED | wxEXPAND);
 	SetSizer(s);
 }

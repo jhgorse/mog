@@ -12,7 +12,7 @@ exec_prefix = ${prefix}
 datarootdir = ${prefix}/share
 INSTALL = /usr/bin/install -c
 SHARED_LD_CXX = ${CXX} -dynamiclib -single_module -headerpad_max_install_names -o
-SHARED_LD_MODULE_CXX = CXX="$(CXX)" /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/shared-ld-sh -bundle -headerpad_max_install_names -o
+SHARED_LD_MODULE_CXX = CXX="$(CXX)" /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/shared-ld-sh -bundle -headerpad_max_install_names -o
 LIBEXT = .a
 LIBPREFIX = lib
 SO_SUFFIX = dylib
@@ -28,8 +28,8 @@ INSTALL_PROGRAM = cp -fp
 INSTALL_DATA = cp -fp
 INSTALL_DIR = mkdir -p
 ICC_PCH_USE_SWITCH = 
-BK_DEPS = /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/bk-deps
-BK_MAKE_PCH = /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/bk-make-pch
+BK_DEPS = /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/bk-deps
+BK_MAKE_PCH = /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/bk-make-pch
 srcdir = ..
 top_srcdir = ..
 bindir = ${exec_prefix}/bin
@@ -38,7 +38,7 @@ datadir = ${datarootdir}
 includedir = ${prefix}/include
 DLLPREFIX = lib
 DLLPREFIX_MODULE = 
-LIBS = -lz -lpthread -lc++ -llzma
+LIBS = -lz -lpthread -lc++
 AR = ar
 AROPTIONS = rcu
 RANLIB = ranlib
@@ -49,7 +49,7 @@ CXXFLAGS = -DWX_PRECOMP -O2 -fno-strict-aliasing -std=c++0x -stdlib=libc++ -fno-
 OBJCXXFLAGS = -O2 -fno-strict-aliasing 
 CPPFLAGS = -D_FILE_OFFSET_BITS=64 -I${wx_top_builddir}/lib/wx/include/osx_cocoa-unicode-static-3.0 -I${top_srcdir}/include -stdlib=libc++
 LDFLAGS =   -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL 
-VENDOR = custom
+VENDOR = apple
 WX_FLAVOUR = 
 WX_LIB_FLAVOUR = 
 DEREZ = DeRez
@@ -58,18 +58,18 @@ TOOLKIT_LOWERCASE = osx_cocoa
 TOOLKIT_VERSION = 
 TOOLCHAIN_NAME = osx_cocoau-3.0
 TOOLCHAIN_FULLNAME = osx_cocoa-unicode-static-3.0
-EXTRALIBS =   -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL  -lz -lpthread -lc++ -llzma 
+EXTRALIBS =   -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL  -lz -lpthread -lc++ 
 EXTRALIBS_XML =  -lexpat
 EXTRALIBS_HTML = 
 EXTRALIBS_MEDIA = -framework QTKit
-EXTRALIBS_GUI = -framework WebKit
+EXTRALIBS_GUI = 
 EXTRALIBS_OPENGL =  -framework OpenGL -framework AGL
 EXTRALIBS_SDL = 
 CXXWARNINGS = -Wall -Wundef -Wunused-parameter -Wno-ctor-dtor-privacy -Woverloaded-virtual -Wno-deprecated-declarations
 HOST_SUFFIX = 
 DYLIB_RPATH_INSTALL = 
 DYLIB_RPATH_POSTLINK = 
-wx_top_builddir = /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug
+wx_top_builddir = /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug
 
 ### Variables: ###
 

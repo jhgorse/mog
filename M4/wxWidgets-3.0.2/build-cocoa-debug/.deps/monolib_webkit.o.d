@@ -1,7 +1,7 @@
 monolib_webkit.o: ../src/html/htmlctrl/webkit/webkit.mm \
   ../include/wx/wxprec.h ../include/wx/defs.h ../include/wx/platform.h \
   ../include/wx/compiler.h \
-  /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/lib/wx/include/osx_cocoa-unicode-static-3.0/wx/setup.h \
+  /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/lib/wx/include/osx_cocoa-unicode-static-3.0/wx/setup.h \
   ../include/wx/chkconf.h ../include/wx/osx/chkconf.h \
   ../include/wx/osx/cocoa/chkconf.h ../include/wx/unix/chkconf.h \
   ../include/wx/version.h ../include/wx/cpp.h ../include/wx/dlimpexp.h \
@@ -103,7 +103,4 @@ monolib_webkit.o: ../src/html/htmlctrl/webkit/webkit.mm \
   ../include/wx/sizer.h ../include/wx/choicdlg.h \
   ../include/wx/generic/choicdgg.h ../include/wx/textdlg.h \
   ../include/wx/generic/textdlgg.h ../include/wx/valtext.h \
-  ../include/wx/filedlg.h ../include/wx/osx/filedlg.h \
-  ../include/wx/osx/private.h ../include/wx/osx/core/private.h \
-  ../include/wx/osx/core/cfstring.h ../include/wx/osx/core/cfdataref.h \
-  ../include/wx/osx/cocoa/private.h ../include/wx/html/webkit.h
+  ../include/wx/filedlg.h ../include/wx/osx/filedlg.h

@@ -2,7 +2,7 @@
 
 # libtool - Provide generalized library-building support services.
 # Generated automatically by config.status (tiff) 4.0.3
-# Libtool was configured on host justin-hartmans-macbook-pro.local:
+# Libtool was configured on host i7joe.local:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 #
 #   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
@@ -75,13 +75,13 @@ PATH_SEPARATOR=":"
 
 # The host system.
 host_alias=
-host=i386-apple-darwin14.0.0
-host_os=darwin14.0.0
+host=i386-apple-darwin14.1.0
+host_os=darwin14.1.0
 
 # The build system.
 build_alias=
-build=i386-apple-darwin14.0.0
-build_os=darwin14.0.0
+build=i386-apple-darwin14.1.0
+build_os=darwin14.1.0
 
 # A sed program that does not truncate output.
 SED="/usr/bin/sed"
@@ -99,7 +99,7 @@ EGREP="/usr/bin/grep -E"
 FGREP="/usr/bin/grep -F"
 
 # A BSD- or MS-compatible name lister.
-NM="/opt/local/bin/nm"
+NM="/usr/bin/nm"
 
 # Whether we need soft or hard links.
 LN_S="ln -s"

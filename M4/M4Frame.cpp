@@ -54,6 +54,9 @@ M4Frame::M4Frame()
 	, m_Annunciator()
 	, m_VideoPanels()
 	, m_pSenderPipeline(NULL)
+  , v()
+  , h1()
+  , h2()
 {
 	std::memset(m_VideoPanels, 0, sizeof(m_VideoPanels));
 	
@@ -147,12 +150,15 @@ M4Frame::M4Frame()
 		delete[] participantAddresses;
 	}
 
-	wxBoxSizer* v = new wxBoxSizer(wxVERTICAL);
-	wxBoxSizer* h1 = new wxBoxSizer(wxHORIZONTAL);
-	wxBoxSizer* h2 = new wxBoxSizer(wxHORIZONTAL);
-	
+  // Init GUI variables
+  v = new wxBoxSizer(wxHORIZONTAL);
+  h1 = new wxBoxSizer(wxVERTICAL);
+  h2 = new wxBoxSizer(wxVERTICAL);
+  selectedMediaPanelId = 0;
+  
 	m_VideoPanels[0] = new VideoPanel(this, "Me");
-	h1->Add(m_VideoPanels[0], 1, wxALL | wxEXPAND, 5);
+  m_VideoPanels[0]->m_MediaPanel->Bind(wxEVT_LEFT_UP, &M4Frame::OnClick, this);
+  //std::cout  << "m_VideoPanels Id " << 0 << " " << m_VideoPanels[0]->m_MediaPanel->GetId() << std::endl;
 	
 	const std::string* myName = GetNameForAddress(m_MyAddress);
 	for (size_t i = 1, j=0; j < std::min(m_ParticipantList.GetCount(), 6UL); ++j)
@@ -160,14 +166,13 @@ M4Frame::M4Frame()
 		if (myName->compare(m_ParticipantList[j]) != 0)
 		{
 			m_VideoPanels[i] = new VideoPanel(this, m_ParticipantList[j]);
-			(((i % 2) == 0) ? h1 : h2)->Add(m_VideoPanels[i], 1, wxALL | wxEXPAND, 5);
+      m_VideoPanels[i]->m_MediaPanel->Bind(wxEVT_LEFT_UP, &M4Frame::OnClick, this);
+      //std::cout  << "m_VideoPanels Id " << i << " " << m_VideoPanels[i]->m_MediaPanel->GetId() << std::endl;
 			++i;
 		}
 	}
 	
-	v->Add(h1, 1, wxALL | wxEXPAND);
-	v->Add(h2, 1, wxALL | wxEXPAND);
-
+  SetView(0);
 	SetSizer(v);
 	
 	// We can't start GStreamer stuff until the main loop is running; so we hook up an
@@ -176,6 +181,82 @@ M4Frame::M4Frame()
 	Connect(wxEVT_IDLE, wxIdleEventHandler(M4Frame::OnIdle));
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::OnClick
+///
+/// Handle mouse click release
+///
+/// @param event  wxCommandEvent passed from child
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void M4Frame::OnClick(wxMouseEvent& event)
+{
+  //std::cout  << "OnClick reached M4Frame " << event.GetId() << std::endl;
+  SetView(event.GetId());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// M4Frame::SetView
+///
+/// Handle layout of the video panels
+///
+/// @param mediaPanelId  Selected "m_MediaPanel" Id. Set to 0 for no selection.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void M4Frame::SetView(int mediaPanelId)
+{
+  //std::cout  << "SetView  mediaPanelId: " << mediaPanelId
+  //           << "  selectedMediaPanelId: " << selectedMediaPanelId << std::endl;
+  
+  // Detach all children from sizers
+  h1->Clear(false);
+  h2->Clear(false);
+  v->Detach(h1);
+  v->Detach(h2);
+  
+  if ((mediaPanelId == selectedMediaPanelId)
+      || (mediaPanelId == 0))
+  {
+    // Set view to two rows, equal spaced
+    v->SetOrientation(wxVERTICAL);
+    h1->SetOrientation(wxHORIZONTAL);
+    h2->SetOrientation(wxHORIZONTAL);
+    
+    for (size_t i = 0; i < std::min(m_ParticipantList.GetCount(), 6UL); ++i)
+    {
+      (((i % 2) == 0) ? h1 : h2)->Add(m_VideoPanels[i], 1, wxALL | wxEXPAND, 5);
+    }
+    v->Add(h1, 1, wxALL | wxEXPAND);
+    v->Add(h2, 1, wxALL | wxEXPAND);
+    
+    selectedMediaPanelId = 0;
+  }
+  else
+  {
+    // Maximize the selected media panel
+    v->SetOrientation(wxHORIZONTAL);
+    h1->SetOrientation(wxVERTICAL);
+    h2->SetOrientation(wxVERTICAL);
+    
+    for (size_t i = 0; i < std::min(m_ParticipantList.GetCount(), 6UL); ++i)
+    {
+      if (mediaPanelId == m_VideoPanels[i]->m_MediaPanel->GetId()) // Maximize this Id
+      {
+        h2->Add(m_VideoPanels[i], 1, wxALL | wxEXPAND, 5);
+      }
+      else // Iconize these Ids
+      {
+        h1->Add(m_VideoPanels[i], 1, wxALL | wxEXPAND, 5);
+      }
+    }
+    v->Add(h1, 1, wxLEFT | wxTOP | wxBOTTOM | wxEXPAND | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL);
+    v->Add(h2, 4, wxALL | wxEXPAND);
+    
+    selectedMediaPanelId = mediaPanelId;
+  }
+
+  Layout(); // Redraw
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// M4Frame::~M4Frame

@@ -7,5 +7,5 @@ Name: libtiff
 Description:  Tag Image File Format (TIFF) library.
 Version: 4.0.3
 Libs: -L${libdir} -ltiff
-Libs.private: -lz 
+Libs.private: -ljpeg -lz 
 Cflags: -I${includedir}

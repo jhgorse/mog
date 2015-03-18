@@ -16,7 +16,7 @@
 #endif /* __cplusplus */
 
 /* fill in with the string wxGetOsDescription() will return */
-#define WXWIN_OS_DESCRIPTION "Darwin 14.0.0 x86_64"
+#define WXWIN_OS_DESCRIPTION "Darwin 14.1.0 x86_64"
 
 /* the installation location prefix from configure */
 #define wxINSTALL_PREFIX "/usr/local"
@@ -333,7 +333,7 @@
 
 #define wxUSE_STC 1
 
-#define wxUSE_WEBVIEW 1
+#define wxUSE_WEBVIEW 0
 
 #ifdef __WXMSW__
 #define wxUSE_WEBVIEW_IE 0
@@ -342,9 +342,9 @@
 #endif
 
 #if defined(__WXGTK__) || defined(__WXOSX__)
-#define wxUSE_WEBVIEW_WEBKIT 1
+#define wxUSE_WEBVIEW_WEBKIT 0
 #else
-#define wxUSE_WEBVIEW_WEBKIT 1
+#define wxUSE_WEBVIEW_WEBKIT 0
 #endif
 
 
@@ -870,7 +870,7 @@
 /*
  * wxWebKitCtrl
  */
-#define wxUSE_WEBKIT 1
+#define wxUSE_WEBKIT 0
 
 /*
  * Objective-C class name uniquifying

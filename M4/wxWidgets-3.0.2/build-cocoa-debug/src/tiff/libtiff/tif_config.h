@@ -44,13 +44,13 @@
 #define HAVE_GLUT_GLUT_H 1
 
 /* Define to 1 if you have the <GL/glut.h> header file. */
-/* #undef HAVE_GL_GLUT_H */
+#define HAVE_GL_GLUT_H 1
 
 /* Define to 1 if you have the <GL/glu.h> header file. */
-/* #undef HAVE_GL_GLU_H */
+#define HAVE_GL_GLU_H 1
 
 /* Define to 1 if you have the <GL/gl.h> header file. */
-/* #undef HAVE_GL_GL_H */
+#define HAVE_GL_GL_H 1
 
 /* Define as 0 or 1 according to the floating point format suported by the
    machine */
@@ -187,7 +187,7 @@
 /* #undef JPEG_DUAL_MODE_8_12 */
 
 /* Support JPEG compression (requires IJG JPEG library) */
-/* #undef JPEG_SUPPORT */
+#define JPEG_SUPPORT 1
 
 /* 12bit libjpeg primary include file with path */
 /* #undef LIBJPEG_12_PATH */
@@ -215,7 +215,7 @@
 /* #undef NO_MINUS_C_MINUS_O */
 
 /* Support Old JPEG compresson (read-only) */
-/* #undef OJPEG_SUPPORT */
+#define OJPEG_SUPPORT 1
 
 /* Name of package */
 #define PACKAGE "tiff"
@@ -364,7 +364,7 @@
 #endif
 
 /* Define to 1 if the X Window System is missing or not being used. */
-#define X_DISPLAY_MISSING 1
+/* #undef X_DISPLAY_MISSING */
 
 /* Support Deflate compression */
 #define ZIP_SUPPORT 1

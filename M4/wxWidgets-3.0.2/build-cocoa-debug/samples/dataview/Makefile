@@ -15,10 +15,10 @@ EXEEXT =
 WINDRES = 
 SETFILE = SetFile
 NM = nm
-BK_DEPS = /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug/bk-deps
+BK_DEPS = /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug/bk-deps
 srcdir = ../../../samples/dataview
 top_srcdir = ../../..
-LIBS = -lz -lpthread -lc++ -llzma
+LIBS = -lz -lpthread -lc++
 LDFLAGS_GUI = 
 CXX = g++ -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk -mmacosx-version-min=10.7
 CXXFLAGS = -DWX_PRECOMP -O2 -fno-strict-aliasing -std=c++0x -stdlib=libc++ -fno-common 
@@ -29,14 +29,14 @@ TOOLKIT = OSX_COCOA
 TOOLKIT_LOWERCASE = osx_cocoa
 TOOLKIT_VERSION = 
 TOOLCHAIN_FULLNAME = osx_cocoa-unicode-static-3.0
-EXTRALIBS =   -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL  -lz -lpthread -lc++ -llzma 
+EXTRALIBS =   -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL  -lz -lpthread -lc++ 
 EXTRALIBS_XML =  -lexpat
-EXTRALIBS_GUI = -framework WebKit
+EXTRALIBS_GUI = 
 EXTRALIBS_SDL = 
 CXXWARNINGS = -Wall -Wundef -Wunused-parameter -Wno-ctor-dtor-privacy -Woverloaded-virtual -Wno-deprecated-declarations
 HOST_SUFFIX = 
 SAMPLES_RPATH_FLAG = 
-wx_top_builddir = /Users/justinhartman/Documents/BoxCast/JingSelfStudy/OneCommunity/libs/wxWidgets-3.0.2/build-cocoa-debug
+wx_top_builddir = /Users/jhg/Documents/work/mog-master/M4/wxWidgets-3.0.2/build-cocoa-debug
 
 ### Variables: ###
 
