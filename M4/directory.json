@@ -3,6 +3,7 @@
 	"participants": [
 		{"name": "Alice", "address": "192.168.211.2"},
 		{"name": "Bob",   "address": "192.168.211.3"},
-		{"name": "Cindy", "address": "192.168.211.4"}
+		{"name": "Carol", "address": "192.168.211.4"},
+		{"name": "Ted",   "address": "192.168.211.5"}
 	]
 }
