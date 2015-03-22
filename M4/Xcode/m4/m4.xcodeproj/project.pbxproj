@@ -189,7 +189,7 @@
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = "/Users/jhg/Documents/work/mog-master/M4";
+			buildWorkingDirectory = /Users/boxcast/mog/M4;
 			dependencies = (
 			);
 			name = m4;
