@@ -140,7 +140,14 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 	// Create an rtpbin
 	GstElement* rtpbin = gst_element_factory_make("rtpbin", "rtpbin");
 	g_object_set(G_OBJECT(rtpbin),
-		"latency", RTP_BIN_LATENCY_MS,
+               "latency", RTP_BIN_LATENCY_MS,
+               "buffer-mode",               1,  // 0 none, (1) slave, 2 h/l buffer, 4 synced
+               "drop-on-latency",        TRUE,  // (FALSE)
+               "ntp-sync",              FALSE,  // (FALSE)
+               "rtcp-sync",                 0,  // (0) always, 1 initial, 2 rtp-info
+               "rtcp-sync-interval",    FALSE,  // (FALSE)
+               "do-sync-event",         FALSE,  // (FALSE)
+               "use-pipeline-clock",    FALSE,  // (FALSE)
 		NULL);
 	
 	// Get device index and caps for the selected video input
@@ -174,15 +181,15 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 		"max-size-bytes",   0,
 		"max-size-time",    0,
 		"silent",           TRUE,
+    "leaky",            2, // GST_QUEUE_LEAK_DOWNSTREAM
 		NULL);
-	gst_util_set_object_arg(G_OBJECT(queue), "leaky", "downstream");
-		
+
 	GstElement* videoconvert2 = gst_element_factory_make("videoconvert", NULL);
 	
 	GstElement* videosink = gst_element_factory_make("osxvideosink", "videosink");
 	g_object_set(G_OBJECT(videosink),
 		"enable-last-sample", FALSE,
-		"sync",               FALSE,
+		"sync",               TRUE,
 		NULL);
 	
 	GstElement* venc = gst_element_factory_make("x264enc", "venc");
@@ -195,14 +202,15 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 	GstElement* vsink = gst_element_factory_make("multiudpsink", "vsink");
 	g_object_set(G_OBJECT(vsink),
 		"enable-last-sample", FALSE,
-		"sync",               FALSE,
-		"async",              FALSE,
+		"sync",               TRUE,
+		"async",              TRUE,
 		NULL);
 	
 	GstElement* vcsink = gst_element_factory_make("multiudpsink", "vcsink");
 	g_object_set(G_OBJECT(vcsink),
 		"enable-last-sample", FALSE,
 		"sync",               FALSE,
+		"async",              FALSE,
 		NULL);
 	
 	gst_bin_add_many(GST_BIN(pipeline), rtpbin, videosrc, srccapsfilter, videoconvert1, t, queue, videoconvert2, videosink, venc, rtph264pay, vsink, vcsink, NULL);
@@ -254,14 +262,15 @@ GstElement* SenderPipeline::BuildPipeline(const char* videoInputName, const char
 	GstElement* asink = gst_element_factory_make("multiudpsink", "asink");
 	g_object_set(G_OBJECT(asink),
 		"enable-last-sample", FALSE,
-		"sync",               FALSE,
-		"async",              FALSE,
+  	"sync",               TRUE,
+		"async",              TRUE,
 		NULL);
 	
 	GstElement* acsink = gst_element_factory_make("multiudpsink", "acsink");
 	g_object_set(G_OBJECT(acsink),
 		"enable-last-sample", FALSE,
 		"sync",               FALSE,
+		"async",              FALSE,
 		NULL);
     	
 	gst_bin_add_many(GST_BIN(pipeline), osxaudiosrc, srccapsfilter, audioresample, capsfilter2, audioconvert, speexenc, rtpspeexpay, asink, acsink, NULL);
