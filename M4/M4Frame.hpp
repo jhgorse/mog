@@ -146,11 +146,16 @@ private:
   /// The View, which consists of
   // 3 sizers for M4Frame,
   wxBoxSizer* v;
+  wxBoxSizer* v1;
+  wxBoxSizer* v2;
   wxBoxSizer* h1;
   wxBoxSizer* h2;
   
-  // Id of the selected m_MediaPanel,
-  int selectedMediaPanelId;
+  // Id of the selected m_MediaPanel
+  int lastSelectedMediaPanelId;
+  
+  // Indices of selected Video Panels
+  bool m_SelectedVideoPanelIndices[6];
   
   // and a method for populating those sizers dynamically.
   void SetView(int mediaPanelId);

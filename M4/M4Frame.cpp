@@ -59,6 +59,7 @@ M4Frame::M4Frame()
   , h2()
 {
 	std::memset(m_VideoPanels, 0, sizeof(m_VideoPanels));
+  std::memset(m_SelectedVideoPanelIndices, 0, sizeof(m_SelectedVideoPanelIndices));
 	
 	// First, show a dialog to choose video & audio inputs
 	InputsDialog* inputs = new InputsDialog(wxT("Choose Inputs"));
@@ -152,9 +153,11 @@ M4Frame::M4Frame()
 
   // Init GUI variables
   v = new wxBoxSizer(wxHORIZONTAL);
+  v1 = new wxBoxSizer(wxHORIZONTAL);
+  v2 = new wxBoxSizer(wxHORIZONTAL);
   h1 = new wxBoxSizer(wxVERTICAL);
   h2 = new wxBoxSizer(wxVERTICAL);
-  selectedMediaPanelId = 0;
+  lastSelectedMediaPanelId = 0;
   
 	m_VideoPanels[0] = new VideoPanel(this, "Me");
   m_VideoPanels[0]->m_MediaPanel->Bind(wxEVT_LEFT_UP, &M4Frame::OnClick, this);
@@ -205,54 +208,111 @@ void M4Frame::OnClick(wxMouseEvent& event)
 
 void M4Frame::SetView(int mediaPanelId)
 {
-  //std::cout  << "SetView  mediaPanelId: " << mediaPanelId
-  //           << "  selectedMediaPanelId: " << selectedMediaPanelId << std::endl;
+  size_t _maximizedPanels = 0;
+  size_t _panelCount = m_ParticipantList.GetCount();
   
   // Detach all children from sizers
   h1->Clear(false);
   h2->Clear(false);
+  v1->Clear(false);
   v->Detach(h1);
   v->Detach(h2);
+  v->Detach(v1);
+  v->Detach(v2);
+  v2->Detach(h1);
+  v2->Detach(h2);
   
-  if ((mediaPanelId == selectedMediaPanelId)
-      || (mediaPanelId == 0))
+  // Find the clicked media panel and toggle it's state
+  for (size_t i = 0; i < std::min(_panelCount, 6UL); ++i)
   {
-    // Set view to two rows, equal spaced
-    v->SetOrientation(wxVERTICAL);
-    h1->SetOrientation(wxHORIZONTAL);
-    h2->SetOrientation(wxHORIZONTAL);
-    
-    for (size_t i = 0; i < std::min(m_ParticipantList.GetCount(), 6UL); ++i)
-    {
-      (((i % 2) == 0) ? h1 : h2)->Add(m_VideoPanels[i], 1, wxALL | wxEXPAND, 5);
+    if (mediaPanelId == m_VideoPanels[i]->m_MediaPanel->GetId()) {
+      if (m_SelectedVideoPanelIndices[i] == FALSE) {
+        m_SelectedVideoPanelIndices[i] = TRUE;
+      } else if (m_SelectedVideoPanelIndices[i] == TRUE) {
+        m_SelectedVideoPanelIndices[i] = FALSE;
+      }
     }
-    v->Add(h1, 1, wxALL | wxEXPAND);
-    v->Add(h2, 1, wxALL | wxEXPAND);
-    
-    selectedMediaPanelId = 0;
   }
-  else
+
+  // Count maximized panels
+  for (size_t i = 0; i < std::min(_panelCount, 6UL); ++i)
   {
-    // Maximize the selected media panel
-    v->SetOrientation(wxHORIZONTAL);
-    h1->SetOrientation(wxVERTICAL);
-    h2->SetOrientation(wxVERTICAL);
-    
-    for (size_t i = 0; i < std::min(m_ParticipantList.GetCount(), 6UL); ++i)
-    {
-      if (mediaPanelId == m_VideoPanels[i]->m_MediaPanel->GetId()) // Maximize this Id
-      {
-        h2->Add(m_VideoPanels[i], 1, wxALL | wxEXPAND, 5);
-      }
-      else // Iconize these Ids
-      {
-        h1->Add(m_VideoPanels[i], 1, wxALL | wxEXPAND, 5);
-      }
+    if (m_SelectedVideoPanelIndices[i] == TRUE) {
+      _maximizedPanels++;
     }
-    v->Add(h1, 1, wxLEFT | wxTOP | wxBOTTOM | wxEXPAND | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL);
-    v->Add(h2, 4, wxALL | wxEXPAND);
-    
-    selectedMediaPanelId = mediaPanelId;
+  }
+  
+  // If all the panels get selected, reset
+  if (_maximizedPanels >= _panelCount) {
+    _maximizedPanels = 0;
+    for (size_t i = 0; i < std::min(_panelCount, 6UL); ++i) {
+      m_SelectedVideoPanelIndices[i] = FALSE;
+    }
+  }
+  
+  switch (_maximizedPanels) {
+    case 0:
+      // Set view to two rows, equal spaced
+      v->SetOrientation(wxVERTICAL);
+      h1->SetOrientation(wxHORIZONTAL);
+      h2->SetOrientation(wxHORIZONTAL);
+      
+      for (size_t i = 0; i < std::min(_panelCount, 6UL); ++i)
+      {
+        (((i % 2) == 0) ? h1 : h2)->Add(m_VideoPanels[i], 1, wxALL | wxEXPAND, 5);
+      }
+      v->Add(h1, 1, wxALL | wxEXPAND);
+      v->Add(h2, 1, wxALL | wxEXPAND);
+      
+      lastSelectedMediaPanelId = 0;
+      break;
+    case 1:
+      // Maximize the selected media panel(s)
+      v->SetOrientation(wxHORIZONTAL);
+      h1->SetOrientation(wxVERTICAL);
+      h2->SetOrientation(wxHORIZONTAL);
+      
+      for (size_t i = 0; i < std::min(_panelCount, 6UL); ++i)
+      {
+        if (m_SelectedVideoPanelIndices[i] == TRUE) // Maximize this Id
+        {
+          h2->Add(m_VideoPanels[i], 1, wxALL | wxEXPAND, 5);
+        }
+        else // Iconize these Ids
+        {
+          h1->Add(m_VideoPanels[i], 0, wxALL | wxEXPAND, 5);
+        }
+      }
+      v->Add(h1, 1, wxLEFT | wxTOP | wxALIGN_LEFT | wxEXPAND); // | wxBOTTOM | wxEXPAND | wxALIGN_CENTER_VERTICAL
+      v->Add(h2, 4, wxALL | wxEXPAND);
+      
+      lastSelectedMediaPanelId = mediaPanelId;
+      break;
+    default: // Multiple selected panels to maximize
+      v->SetOrientation(wxHORIZONTAL);
+      v1->SetOrientation(wxVERTICAL);
+      v2->SetOrientation(wxVERTICAL);
+      h1->SetOrientation(wxHORIZONTAL);
+      h2->SetOrientation(wxHORIZONTAL);
+      
+      for (size_t i = 0; i < std::min(_panelCount, 6UL); ++i)
+      {
+        if (m_SelectedVideoPanelIndices[i] == TRUE) { // Maximize
+          (((_maximizedPanels-- % 2) == 0) ? h1 : h2)->Add(m_VideoPanels[i], 1, wxALL | wxEXPAND, 5);
+        }
+        else // Iconize these Ids
+        {
+          v1->Add(m_VideoPanels[i], 0, wxALL | wxEXPAND, 5);
+        }
+      }
+      
+      v->Add(v1, 1, wxLEFT | wxTOP | wxALIGN_LEFT | wxEXPAND); // | wxBOTTOM | wxALIGN_CENTER_VERTICAL
+      v2->Add(h1, 4, wxALL | wxEXPAND);
+      v2->Add(h2, 4, wxALL | wxEXPAND);
+      v->Add(v2, 4, wxALL | wxEXPAND);
+      
+      lastSelectedMediaPanelId = mediaPanelId;
+      break;
   }
 
   Layout(); // Redraw
